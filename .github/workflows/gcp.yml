@@ -41,5 +41,5 @@ jobs:
     - name: 'Deploy to Cloud Run'
       uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
-        image: 'gcr.io/cloudrun/hello'
-        service: 'hello-cloud-run'
+        image: 'gcr.io/vide-336112/p2p-server:latest'
+        service: 'p2p-server'
