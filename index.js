@@ -2,8 +2,8 @@ const cors = require('cors');
 const crypto = require('crypto');
 const express = require("express");
 const socket = require("socket.io");
-const createAdapter = require("@socket.io/redis-adapter");
-const createClient = require("redis");
+const { createAdapter } = require("@socket.io/redis-adapter");
+const { createClient } = require("redis");
 const { Firestore } = require("@google-cloud/firestore");
 require('dotenv').config()
 
