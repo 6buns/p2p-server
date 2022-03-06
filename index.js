@@ -53,26 +53,26 @@ const keyStoreRef = db.collection('keyStore')
 io.adapter(createAdapter(pubClient, subClient));
 
 io.use((socket, next) => {
-  const apiHash = crypto.createHash('md5').update(socket.handshake.auth.key).digest('hex');
-  keyStoreRef.where('key', '==', apiHash).get().then(doc => {
-      if (!doc.exists) {
-        next(new Error("Unauthorized"))
-      } else {
-        const { uid } = doc.data();
-        socket.uid = uid
-      }
-  }).catch(err => next(new Error(err)));
+    const apiHash = crypto.createHash('md5').update(socket.handshake.auth.key).digest('hex');
+    keyStoreRef.where('key', '==', apiHash).get().then(doc => {
+        if (!doc.exists) {
+            next(new Error("Unauthorized"))
+        } else {
+            const { uid } = doc.data();
+            socket.uid = uid
+        }
+    }).catch(err => next(new Error(err)));
 })
 
 io.on("connection", function (socket) {
     console.log('Socket Joined : ', socket.id);
 
-    socket.emit('connection', socket.id, io.of("/").adapter.rooms.size);
+    socket.emit('connection', socket.id, io.of("/").adapter.rooms.size, [
+        { url: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.secret) }
+    ]);
 
     socket.broadcast.emit('new-peer-connected', {
-        sid: socket.id, iceServers: [
-            { url: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.secret) }
-        ]
+        sid: socket.id
     })
 
     socket.on('join-room', (room, callback) => {
