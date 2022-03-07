@@ -55,7 +55,7 @@ io.adapter(createAdapter(pubClient, subClient));
 
 io.use((socket, next) => {
     const apiHash = crypto.createHash('md5').update(socket.handshake.auth.key).digest('hex');
-    keyStoreRef.where('key', '==', apiHash).get().then(doc => {
+    keyStoreRef.doc(apiHash).get().then(doc => {
         if (doc.exists) {
             const { uid } = doc.data();
             socket.uid = uid
