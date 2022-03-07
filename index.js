@@ -89,7 +89,7 @@ io.on("connection", function (socket) {
     })
 
     socket.on('data', ({ to, from, data }) => {
-        console.log(`From : ${from} :: To : ${to} :: sdp : ${data.sdp.type} :: candidate : ${data.candidate}`)
+        console.log(`From : ${from} :: To : ${to} :: sdp : ${data?.sdp?.type} :: candidate : ${data?.candidate}`)
         if (to) {
             io.to(to).emit('data', { to, from, data })
         } else {
