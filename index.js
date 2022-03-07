@@ -6,9 +6,10 @@ const { createAdapter } = require("@socket.io/redis-adapter");
 const { createClient } = require("redis");
 const { Firestore } = require("@google-cloud/firestore");
 require('dotenv').config()
+require('@google-cloud/debug-agent').start({serviceContext: {enableCanary: true}});
 
 // App setup
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 const app = express();
 const server = app.listen(PORT, function () {
     console.log(`Listening on port ${PORT}`);
