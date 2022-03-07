@@ -48,6 +48,11 @@ const io = socket(server, {
 });
 
 const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
+
+(async () => {
+    await client.connect();
+})();
+
 const subClient = pubClient.duplicate();
 const keyStoreRef = db.collection('keyStore')
 
