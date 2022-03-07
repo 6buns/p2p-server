@@ -53,7 +53,7 @@ const keyStoreRef = db.collection('keyStore')
 
 Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
-});
+}).catch(err => console.error(err));
 
 io.use((socket, next) => {
     const apiHash = crypto.createHash('md5').update(socket.handshake.auth.key).digest('hex');
