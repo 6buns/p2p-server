@@ -88,42 +88,44 @@ io.on("connection", function (socket) {
         callback([])
     })
 
-    socket.on('offer-sdp', ({ to, from, sdp }) => {
-        console.log(`From : ${from} :: To : ${to} :: sdp : ${sdp.type}`)
+    socket.on('data', ({ to, from, data }) => {
+        console.log(`From : ${from} :: To : ${to} :: sdp : ${data.sdp.type} :: candidate : ${data.candidate}`)
         if (to) {
-            io.to(to).emit('offer-sdp', { to, from, sdp })
+            io.to(to).emit('data', { to, from, data })
         } else {
             socket.emit('error', 'You are alone nobody to connect to.');
         }
     })
 
-    socket.on('answer-sdp', ({ to, from, sdp }) => {
-        console.log(`From : ${from} :: To : ${to} :: sdp : ${sdp.type}`)
-        if (to) {
-            io.to(to).emit('answer-sdp', { to, from, sdp })
-        } else {
-            socket.emit('error', 'You are alone nobody to connect to.');
-        }
-    })
+    // socket.on('offer-sdp', ({ to, from, sdp }) => {
+    //     console.log(`From : ${from} :: To : ${to} :: sdp : ${sdp.type}`)
+    //     if (to) {
+    //         io.to(to).emit('offer-sdp', { to, from, sdp })
+    //     } else {
+    //         socket.emit('error', 'You are alone nobody to connect to.');
+    //     }
+    // })
 
-    socket.on('candidates', ({ to, from, candidates }) => {
-        console.log(`From : ${from} :: To : ${to} :: candidates : ${JSON.stringify(candidates)}`)
-        if (to) {
-            io.to(to).emit('candidates', { to, from, candidates })
-        } else {
-            socket.emit('error', 'You are alone nobody to connect to.');
-        }
-    })
+    // socket.on('answer-sdp', ({ to, from, sdp }) => {
+    //     console.log(`From : ${from} :: To : ${to} :: sdp : ${sdp.type}`)
+    //     if (to) {
+    //         io.to(to).emit('answer-sdp', { to, from, sdp })
+    //     } else {
+    //         socket.emit('error', 'You are alone nobody to connect to.');
+    //     }
+    // })
+
+    // socket.on('candidates', ({ to, from, candidates }) => {
+    //     console.log(`From : ${from} :: To : ${to} :: candidates : ${JSON.stringify(candidates)}`)
+    //     if (to) {
+    //         io.to(to).emit('candidates', { to, from, candidates })
+    //     } else {
+    //         socket.emit('error', 'You are alone nobody to connect to.');
+    //     }
+    // })
 
     socket.on('disconnect', () => {
         console.log('Socket Left : ', socket.id, socket.adapter.sids)
-        try {
-            for (const [id, setmap] of socket.adapter.sids) {
-                io.to(id).emit('peer-disconnected', socket.id)
-            }
-        } catch (error) {
-            console.log(error)
-        }
     })
 });
 
@@ -141,4 +143,5 @@ io.of('/').adapter.on('join-room', (room, id) => {
 
 io.of('/').adapter.on('leave-room', (room, id) => {
     console.log(`socket ${id} has left room ${room}`);
+    io.in(room).emit('peer-disconnected', socket.id)
 })
