@@ -72,7 +72,7 @@ io.on("connection", function (socket) {
     console.log('Socket Joined : ', socket.id);
 
     socket.emit('connection', socket.id, io.of("/").adapter.rooms.size, [
-        { url: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
+        { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
     ]);
 
     socket.broadcast.emit('new-peer-connected', socket.id)
