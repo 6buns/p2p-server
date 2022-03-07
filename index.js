@@ -75,9 +75,7 @@ io.on("connection", function (socket) {
         { url: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
     ]);
 
-    socket.broadcast.emit('new-peer-connected', {
-        sid: socket.id
-    })
+    socket.broadcast.emit('new-peer-connected', socket.id)
 
     socket.on('join-room', (room, callback) => {
         socket.join(room)
