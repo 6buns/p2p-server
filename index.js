@@ -48,15 +48,12 @@ const io = socket(server, {
 });
 
 const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
-
-(async () => {
-    await client.connect();
-})();
-
 const subClient = pubClient.duplicate();
 const keyStoreRef = db.collection('keyStore')
 
-io.adapter(createAdapter(pubClient, subClient));
+Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+    io.adapter(createAdapter(pubClient, subClient));
+});
 
 io.use((socket, next) => {
     const apiHash = crypto.createHash('md5').update(socket.handshake.auth.key).digest('hex');
