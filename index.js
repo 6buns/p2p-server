@@ -36,7 +36,7 @@ const getTURNCredentials = (name, secret) => {
     password = hmac.read();
     return {
         username,
-        password
+        credential: password
     };
 }
 
