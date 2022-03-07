@@ -6,7 +6,7 @@ const { createAdapter } = require("@socket.io/redis-adapter");
 const { createClient } = require("redis");
 const { Firestore } = require("@google-cloud/firestore");
 require('dotenv').config()
-require('@google-cloud/debug-agent').start({serviceContext: {enableCanary: true}});
+require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: true } });
 
 // App setup
 const PORT = process.env.PORT || 8080;
@@ -59,6 +59,7 @@ io.use((socket, next) => {
         if (doc.exists) {
             const { uid } = doc.data();
             socket.uid = uid
+            next()
         } else {
             next(new Error("Unauthorized"))
         }
