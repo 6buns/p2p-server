@@ -41,7 +41,11 @@ const getTURNCredentials = (name, secret) => {
 }
 
 // Socket setup
-const io = socket(server);
+const io = socket(server, {
+    cors: {
+        origin: ['*'],
+    }
+});
 
 const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
 const subClient = pubClient.duplicate();
@@ -94,6 +98,7 @@ io.on("connection", function (socket) {
     })
 
     socket.on('track-update', ({ id, update, room }) => {
+        console.log(`Track : ${id} :: room : ${room} :: update : ${update}`)
         socket.to(room).emit({ id, update });
     })
 
