@@ -43,7 +43,7 @@ const getTURNCredentials = (name, secret) => {
 // Socket setup
 const io = socket(server, {
     cors: {
-        origin: ['*'],
+        origin: ['p2p.6buns.com'],
     }
 });
 
@@ -97,32 +97,9 @@ io.on("connection", function (socket) {
         }
     })
 
-    // socket.on('offer-sdp', ({ to, from, sdp }) => {
-    //     console.log(`From : ${from} :: To : ${to} :: sdp : ${sdp.type}`)
-    //     if (to) {
-    //         io.to(to).emit('offer-sdp', { to, from, sdp })
-    //     } else {
-    //         socket.emit('error', 'You are alone nobody to connect to.');
-    //     }
-    // })
-
-    // socket.on('answer-sdp', ({ to, from, sdp }) => {
-    //     console.log(`From : ${from} :: To : ${to} :: sdp : ${sdp.type}`)
-    //     if (to) {
-    //         io.to(to).emit('answer-sdp', { to, from, sdp })
-    //     } else {
-    //         socket.emit('error', 'You are alone nobody to connect to.');
-    //     }
-    // })
-
-    // socket.on('candidates', ({ to, from, candidates }) => {
-    //     console.log(`From : ${from} :: To : ${to} :: candidates : ${JSON.stringify(candidates)}`)
-    //     if (to) {
-    //         io.to(to).emit('candidates', { to, from, candidates })
-    //     } else {
-    //         socket.emit('error', 'You are alone nobody to connect to.');
-    //     }
-    // })
+    socket.on('track-update', ({ id, update, room }) => {
+        socket.to(room).emit({ id, update });
+    })
 
     socket.on('disconnect', () => {
         console.log('Socket Left : ', socket.id, socket.adapter.sids)
@@ -143,5 +120,5 @@ io.of('/').adapter.on('join-room', (room, id) => {
 
 io.of('/').adapter.on('leave-room', (room, id) => {
     console.log(`socket ${id} has left room ${room}`);
-    io.in(room).emit('peer-disconnected', socket.id)
+    io.in(room).emit('peer-disconnected', id)
 })
