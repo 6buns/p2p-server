@@ -99,7 +99,7 @@ io.on("connection", function (socket) {
 
     socket.on('track-update', ({ id, update, room }) => {
         console.log(`Track : ${id} :: room : ${room} :: update : ${update}`)
-        socket.to(room).emit({ id, update });
+        socket.to(room).emit('track-update', { id, update });
     })
 
     socket.on('disconnect', () => {
