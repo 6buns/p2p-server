@@ -41,11 +41,7 @@ const getTURNCredentials = (name, secret) => {
 }
 
 // Socket setup
-const io = socket(server, {
-    cors: {
-        origin: ['p2p.6buns.com'],
-    }
-});
+const io = socket(server);
 
 const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
 const subClient = pubClient.duplicate();
