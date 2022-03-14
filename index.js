@@ -144,7 +144,7 @@ app.post('/room', async (req, res) => {
     }
 })
 
-const verifyAPIKey = (apiKey) => {
+const verifyAPIKey = async (apiKey) => {
     return new Promise((resolve, reject) => {
         const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
         const doc = await keyStoreRef.doc(apiHash).get();
