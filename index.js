@@ -145,7 +145,7 @@ app.post('/room', async (req, res) => {
 })
 
 const verifyAPIKey = async (apiKey) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
         const doc = await keyStoreRef.doc(apiHash).get();
         if (doc.exists) {
@@ -167,8 +167,8 @@ const getRoomFromRedis = (roomId, apiKey) => {
     })
 }
 
-const createRoomInRedis = async (roomId, apiKey, stripe_id) => {
-    return new Promise((resolve, reject) => {
+const createRoomInRedis = (roomId, apiKey, stripe_id) => {
+    return new Promise(async (resolve, reject) => {
         const validTill = Date.now() + (60 * 30 * 1000)
         const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
 
@@ -190,8 +190,8 @@ const createRoomInRedis = async (roomId, apiKey, stripe_id) => {
     });
 }
 
-const chargeUser = async (stripe_id) => {
-    return new Promise((resolve, reject) => {
+const chargeUser = (stripe_id) => {
+    return new Promise(async (resolve, reject) => {
         const stripe = require('stripe')('pk_test_51KNlK1SCiwhjjSk0IH16DjJfsWPrcS5eHP2Vjudr6d3upP58wGK3rouBFINwWPxPg54JMLt1CrnEF9UIwURZRHM700jZl8AG9X');
 
         const usageRecord = await stripe.subscriptionItems.createUsageRecord(
