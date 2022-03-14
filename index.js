@@ -80,7 +80,7 @@ io.on("connection", function (socket) {
 
     socket.broadcast.emit('new-peer-connected', socket.id)
 
-    socket.on('join-room', (roomId, callback) => {
+    socket.on('join-room', async (roomId, callback) => {
         // charge here room is new.
         let room;
         try {
