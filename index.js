@@ -208,7 +208,7 @@ const chargeUser = (stripe_id) => {
             })
 
             const subscription_status = subscription_list.data[0].status
-            const subscription_id = subscription_list.data[0].id
+            const subscription_id = subscription_list.data[0].items.data[0].id
 
             if (subscription_status !== 'active') {
                 reject(`Subscription should be active but is ${subscription_status}`)
