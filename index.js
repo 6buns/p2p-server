@@ -217,7 +217,7 @@ const chargeUser = (stripe_id) => {
             if (usageRecord) resolve(usageRecord)
             else reject('Unable to create usage record.')
         } catch (error) {
-            reject(err)
+            reject(error)
         }
     })
 }
