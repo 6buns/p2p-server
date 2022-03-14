@@ -197,8 +197,19 @@ const chargeUser = (stripe_id) => {
     return new Promise(async (resolve, reject) => {
         const stripe = require('stripe')('pk_test_51KNlK1SCiwhjjSk0IH16DjJfsWPrcS5eHP2Vjudr6d3upP58wGK3rouBFINwWPxPg54JMLt1CrnEF9UIwURZRHM700jZl8AG9X');
 
+        const subscription_list = await stripe.subscriptions.list({
+            customer: stripe_id
+        })
+
+        const subscription_status = subscription_list.data[0].status
+        const subscription_id = subscription_list.data[0].id
+
+        if (subscription_status !== 'active') {
+            reject(`Subscription should be active but is ${subscription_status}`)
+        }
+
         const usageRecord = await stripe.subscriptionItems.createUsageRecord(
-            stripe_id,
+            subscription_id,
             { quantity: 1, timestamp: Date.now() }
         );
 
