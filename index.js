@@ -210,7 +210,7 @@ const chargeUser = (stripe_id) => {
 
             const usageRecord = await stripe.subscriptionItems.createUsageRecord(
                 subscription_id,
-                { quantity: 1, timestamp: Date.now() }
+                { quantity: 1, timestamp: Math.ceil(Date.now() / 1000) }
             );
 
             if (usageRecord) resolve(usageRecord)
