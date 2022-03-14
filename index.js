@@ -16,6 +16,7 @@ const server = app.listen(PORT, function () {
     console.log(`http://localhost:${PORT}`);
 });
 const db = new Firestore();
+const keyStoreRef = db.collection('keyStore')
 
 // Static files
 app.use(express.static("public"));
@@ -49,27 +50,29 @@ const io = socket(server, {
 
 const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
 const subClient = pubClient.duplicate();
-const keyStoreRef = db.collection('keyStore')
+const client = pubClient.duplicate();
 
-Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+Promise.all([pubClient.connect(), subClient.connect(), client.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
 }).catch(err => console.error(err));
 
+/**
+ * charge the stripe_id for each new room creation.
+ */
+
 io.use((socket, next) => {
-    const apiHash = crypto.createHash('md5').update(socket.handshake.auth.key).digest('hex');
-    keyStoreRef.doc(apiHash).get().then(doc => {
-        if (doc.exists) {
-            const { uid } = doc.data();
-            socket.uid = uid
-            next()
-        } else {
-            next(new Error("Unauthorized"))
-        }
-    }).catch(err => next(new Error(err)));
+    try {
+        const { api_key, stripe_id } = await verifyAPIKey(socket.handshake.auth.key)
+        socket.data.stripe_id = stripe_id
+        socket.data.api_key = api_key
+        next()
+    } catch (error) {
+        next(error)
+    }
 })
 
 io.on("connection", function (socket) {
-    console.log('Socket Joined : ', socket.id);
+    console.log('Socket Joined : ', socket.id, socket.uid);
 
     socket.emit('connection', socket.id, io.of("/").adapter.rooms.size, [
         { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
@@ -77,9 +80,15 @@ io.on("connection", function (socket) {
 
     socket.broadcast.emit('new-peer-connected', socket.id)
 
-    socket.on('join-room', (room, callback) => {
+    socket.on('join-room', (roomId, callback) => {
+        // charge here room is new.
+        let room;
+        try {
+            room = await getRoomFromRedis(roomId, socket.data.api_key)
+        } catch (error) {
+            callback('Room not present')
+        }
         socket.join(room)
-        let peerList = []
         for (const [roomName, id] of io.of("/").adapter.rooms) {
             if (roomName === room && id !== socket.id) {
                 callback([...id])
@@ -123,3 +132,77 @@ io.of('/').adapter.on('leave-room', (room, id) => {
     console.log(`socket ${id} has left room ${room}`);
     io.in(room).emit('peer-disconnected', id)
 })
+
+/**
+ * Verify API key, create a room with provided room name.
+ */
+app.post('/room', async (req, res) => {
+    const { apiKey, roomId } = req.body
+    try {
+        const { stripe_id } = await verifyAPIKey(apiKey);
+        const { redis_response, record } = await createRoomInRedis(roomId, apiKey, stripe_id)
+        res.status(200).json({ redis_response, record })
+    } catch (error) {
+        res.status(500).json({ error })
+    }
+})
+
+const verifyAPIKey = (apiKey) => {
+    return new Promise((resolve, reject) => {
+        const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
+        const doc = await keyStoreRef.doc(apiHash).get();
+        if (doc.exists) {
+            resolve(doc.data());
+        } else {
+            reject('Document does not exsists')
+        }
+    })
+}
+
+const getRoomFromRedis = (roomId, apiKey) => {
+    return new Promise((resolve, reject) => {
+        const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
+
+        client.get(roomKeyHash, (err, data) => {
+            if (data) resolve(data)
+            else reject(err)
+        })
+    })
+}
+
+const createRoomInRedis = async (roomId, apiKey, stripe_id) => {
+    return new Promise((resolve, reject) => {
+        const validTill = Date.now() + (60 * 30 * 1000)
+        const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
+
+        const redis_response = await client.set(roomKeyHash, JSON.stringify({
+            roomId,
+            createdAt: Date.now(),
+            validTill,
+        }), {
+            PXAT: validTill,
+            NX: true
+        })
+
+        if (redis_response === 'OK') {
+            const record = await chargeUser(stripe_id)
+            resolve({ redis_response, record })
+        } else {
+            reject(redis_response)
+        }
+    });
+}
+
+const chargeUser = async (stripe_id) => {
+    return new Promise((resolve, reject) => {
+        const stripe = require('stripe')('pk_test_51KNlK1SCiwhjjSk0IH16DjJfsWPrcS5eHP2Vjudr6d3upP58wGK3rouBFINwWPxPg54JMLt1CrnEF9UIwURZRHM700jZl8AG9X');
+
+        const usageRecord = await stripe.subscriptionItems.createUsageRecord(
+            stripe_id,
+            { quantity: 1, timestamp: Date.now() }
+        );
+
+        if (usageRecord) resolve(usageRecord)
+        else reject('Unable to create usage record.')
+    })
+}
