@@ -185,8 +185,12 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
         })
 
         if (redis_response === 'OK') {
-            const record = await chargeUser(stripe_id)
-            resolve({ redis_response, record })
+            try {
+                const record = await chargeUser(stripe_id)
+                resolve({ redis_response, record })
+            } catch (error) {
+                reject(error)
+            }
         } else {
             reject(redis_response)
         }
