@@ -61,14 +61,11 @@ Promise.all([pubClient.connect(), subClient.connect(), client.connect()]).then((
  */
 
 io.use((socket, next) => {
-    try {
-        const { api_key, stripe_id } = await verifyAPIKey(socket.handshake.auth.key)
+    verifyAPIKey(socket.handshake.auth.key).then(({ api_key, stripe_id }) => {
         socket.data.stripe_id = stripe_id
         socket.data.api_key = api_key
         next()
-    } catch (error) {
-        next(error)
-    }
+    }).catch((err) => next(err))
 })
 
 io.on("connection", function (socket) {
