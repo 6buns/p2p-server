@@ -21,6 +21,8 @@ const keyStoreRef = db.collection('keyStore')
 // Static files
 app.use(express.static("public"));
 
+app.use(express.json())
+
 app.use(cors())
 
 app.get('/test', (req, res) => res.json({ 'yay': true }))
