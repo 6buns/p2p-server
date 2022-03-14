@@ -174,27 +174,21 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
     return new Promise(async (resolve, reject) => {
         const validTill = Date.now() + (60 * 30 * 1000)
         const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
-
-        const redis_response = await client.set(roomKeyHash, JSON.stringify({
-            roomId,
-            createdAt: Date.now(),
-            validTill,
-        }), {
-            PXAT: validTill,
-            NX: true
-        })
-
-        if (redis_response === 'OK') {
-            let record;
-            try {
-                record = await chargeUser(stripe_id)
-            } catch (error) {
-                reject(error)
-            }
-            resolve({ redis_response, record })
-        } else {
-            reject(redis_response)
+        let redis_response, record;
+        try {
+            redis_response = await client.set(roomKeyHash, JSON.stringify({
+                roomId,
+                createdAt: Date.now(),
+                validTill,
+            }), {
+                PXAT: validTill,
+                NX: true
+            })
+            record = await chargeUser(stripe_id)
+        } catch (error) {
+            reject(error)
         }
+        resolve({ redis_response, record })
     });
 }
 
