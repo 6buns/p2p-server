@@ -94,7 +94,7 @@ io.on("connection", function (socket) {
         }
 
         socket.join(room)
-        io.in(room).emit('new-peer-connected', socket.id)
+        socket.broadcast.emit('new-peer-connected', socket.id)
 
         for (const [roomName, id] of io.of("/").adapter.rooms) {
             if (roomName === room && id !== socket.id) {
