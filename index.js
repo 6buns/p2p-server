@@ -82,7 +82,8 @@ io.on("connection", function (socket) {
         // charge here room is new.
         let room;
         try {
-            room = await getRoomFromRedis(roomId, socket.data.api_key)
+            const data = await getRoomFromRedis(roomId, socket.data.api_key);
+            ({ room, createdAt, validTill }) = JSON.parse(data)
         } catch (error) {
             error ? callback({ error }) : callback({ err: 'Room not present' })
         }
@@ -94,7 +95,6 @@ io.on("connection", function (socket) {
         } else {
             socket.join(room)
             socket.broadcast.emit('new-peer-connected', socket.id)
-
             for (const [roomName, id] of io.of("/").adapter.rooms) {
                 if (roomName === room && id !== socket.id) {
                     callback({
@@ -179,9 +179,10 @@ const getRoomFromRedis = (roomId, apiKey) => {
         const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
         try {
             const data = await client.get(roomKeyHash)
-            console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`)
+            console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`, data)
             resolve(data)
         } catch (error) {
+
             reject(error)
         }
     })
