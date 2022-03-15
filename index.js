@@ -78,23 +78,26 @@ io.on("connection", function (socket) {
         { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
     ]);
 
-    socket.broadcast.emit('new-peer-connected', socket.id)
-
     socket.on('join-room', async (roomId, callback) => {
         // charge here room is new.
         let room;
         try {
             room = await getRoomFromRedis(roomId, socket.data.api_key)
         } catch (error) {
-            callback('Room not present')
+            callback({
+                err: 'Room not present'
+            })
         }
         socket.join(room)
+        io.in(room).emit('new-peer-connected', socket.id)
+
         for (const [roomName, id] of io.of("/").adapter.rooms) {
             if (roomName === room && id !== socket.id) {
-                callback([...id])
+                callback({
+                    res: [...id]
+                })
             }
         }
-        callback([])
     })
 
     socket.on('data', ({ to, from, data }) => {
