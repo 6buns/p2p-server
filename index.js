@@ -91,16 +91,16 @@ io.on("connection", function (socket) {
             callback({
                 err: 'Room not present'
             })
-        }
+        } else {
+            socket.join(room)
+            socket.broadcast.emit('new-peer-connected', socket.id)
 
-        socket.join(room)
-        socket.broadcast.emit('new-peer-connected', socket.id)
-
-        for (const [roomName, id] of io.of("/").adapter.rooms) {
-            if (roomName === room && id !== socket.id) {
-                callback({
-                    res: [...id]
-                })
+            for (const [roomName, id] of io.of("/").adapter.rooms) {
+                if (roomName === room && id !== socket.id) {
+                    callback({
+                        res: [...id]
+                    })
+                }
             }
         }
     })
