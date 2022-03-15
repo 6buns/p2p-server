@@ -84,7 +84,7 @@ io.on("connection", function (socket) {
         try {
             room = await getRoomFromRedis(roomId, socket.data.api_key)
         } catch (error) {
-            callback({ error })
+            error ? callback({ error }) : callback({ err: 'Room not present' })
         }
 
         if (!room) {
