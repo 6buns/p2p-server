@@ -83,17 +83,16 @@ io.on("connection", function (socket) {
         let room;
         try {
             room = await getRoomFromRedis(roomId, socket.data.api_key)
-            if (!room) {
-                callback({
-                    err: 'Room not present'
-                })
-            }
         } catch (error) {
+            callback({ error })
+        }
+
+        if (!room) {
             callback({
                 err: 'Room not present'
             })
         }
-        
+
         socket.join(room)
         io.in(room).emit('new-peer-connected', socket.id)
 
