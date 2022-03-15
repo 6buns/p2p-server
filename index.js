@@ -72,7 +72,7 @@ io.use((socket, next) => {
 })
 
 io.on("connection", function (socket) {
-    console.log('Socket Joined : ', socket.id, socket.uid);
+    console.log('Socket Joined : ', socket.id, socket.data.api_key);
 
     socket.emit('connection', socket.id, io.of("/").adapter.rooms.size, [
         { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
@@ -103,6 +103,12 @@ io.on("connection", function (socket) {
                 }
             }
         }
+    })
+
+    socket.on('connection-request', ({ from, to, data }, callback) => {
+        io.to(to).emit('peer-connection-request', { from, to, data }, (peerName) => {
+            callback(peerName)
+        })
     })
 
     socket.on('data', ({ to, from, data }) => {
