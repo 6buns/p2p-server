@@ -179,6 +179,7 @@ const getRoomFromRedis = (roomId, apiKey) => {
         const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
         try {
             const data = await client.get(roomKeyHash)
+            console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`)
             resolve(data)
         } catch (error) {
             reject(error)
@@ -200,6 +201,7 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
                 PXAT: validTill,
                 NX: true
             })
+            console.log(`Created room ${roomId} in redis expiring in ${validTill}.`)
             record = await chargeUser(stripe_id)
         } catch (error) {
             reject(error)
