@@ -168,13 +168,14 @@ const verifyAPIKey = async (apiKey) => {
 }
 
 const getRoomFromRedis = (roomId, apiKey) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
-
-        client.get(roomKeyHash, (err, data) => {
-            if (data) resolve(data)
-            else reject(err)
-        })
+        try {
+            const data = await client.get(roomKeyHash)
+            resolve(data)
+        } catch (error) {
+            reject(error)
+        }
     })
 }
 
