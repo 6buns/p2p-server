@@ -53,10 +53,11 @@ const io = socket(server, {
 
 const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
 const subClient = pubClient.duplicate();
-const client = pubClient.duplicate();
+const client = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
 
 Promise.all([pubClient.connect(), subClient.connect(), client.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
+
 }).catch(err => console.error(err));
 
 /**
@@ -72,6 +73,7 @@ io.use((socket, next) => {
 })
 
 io.on("connection", function (socket) {
+
     console.log('Socket Joined : ', socket.id, socket.data.api_key);
 
     socket.emit('connection', socket.id, io.of("/").adapter.rooms.size, [
