@@ -83,7 +83,7 @@ io.on("connection", function (socket) {
         let room;
         try {
             const data = await getRoomFromRedis(roomId, socket.data.api_key);
-            ({ room, createdAt, validTill }) = JSON.parse(data)
+            (({ room, createdAt, validTill }) = JSON.parse(data))
         } catch (error) {
             error ? callback({ error }) : callback({ err: 'Room not present' })
         }
