@@ -162,6 +162,17 @@ app.post('/room', async (req, res) => {
     }
 })
 
+app.post('/room/update', async (req, res) => {
+    const { apiKey, roomId } = req.body
+    try {
+        const { stripe_id } = await verifyAPIKey(apiKey);
+        const { redis_response, record } = await updateRoomInRedis(roomId, apiKey, stripe_id)
+        res.status(200).json({ redis_response, record })
+    } catch (error) {
+        res.status(500).json({ error })
+    }
+})
+
 const verifyAPIKey = async (apiKey) => {
     return new Promise(async (resolve, reject) => {
         const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
@@ -209,6 +220,20 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
         }
         resolve({ redis_response, record })
     });
+}
+
+const updateRoomInRedis = (roomId, apiKey, stripe_id) => {
+    return new Promise((resolve, reject) => {
+        const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
+        try {
+            await client.del(roomKeyHash)
+            const data = await createRoomInRedis(roomId, apiKey, stripe_id)
+            resolve(data)
+        } catch (error) {
+            reject(error)
+        }
+    })
+
 }
 
 const chargeUser = (stripe_id) => {
