@@ -160,6 +160,7 @@ io.of('/').adapter.on('leave-room', (room, id) => {
  */
 app.post('/room', async (req, res) => {
     const { apiKey, roomId } = req.body
+    console.log(await client.ping())
     try {
         const { stripe_id } = await verifyAPIKey(apiKey);
         const { redis_response, record } = await createRoomInRedis(roomId, apiKey, stripe_id)
