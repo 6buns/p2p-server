@@ -51,9 +51,13 @@ const io = socket(server, {
     }
 });
 
-const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
+const pubClient = createClient({
+    host: 'redis-10344.c280.us-central1-2.gce.cloud.redislabs.com',
+    port: '10344',
+    password: '2BR04rSkxF0IdTmEmqb4338VGsKyqYbz'
+});
 const subClient = pubClient.duplicate();
-const client = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
+const client = pubClient.duplicate();
 
 Promise.all([pubClient.connect(), subClient.connect(), client.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
