@@ -80,10 +80,13 @@ io.on("connection", function (socket) {
 
     socket.on('join-room', async (roomId, callback) => {
         // charge here room is new.
-        let room;
+        let room, createdAt, validTill;
         try {
             const data = await getRoomFromRedis(roomId, socket.data.api_key);
-            (({ room, createdAt, validTill }) = JSON.parse(data))
+            const dataJson = JSON.parse(data)
+            room = dataJson.roomId
+            createdAt = dataJson.createdAt
+            validTill = dataJson.validTill
         } catch (error) {
             error ? callback({ error }) : callback({ err: 'Room not present' })
         }
@@ -94,7 +97,7 @@ io.on("connection", function (socket) {
             })
         } else {
             socket.join(room)
-            socket.broadcast.emit('new-peer-connected', socket.id)
+            // socket.broadcast.emit('new-peer-connected', socket.id)
             for (const [roomName, id] of io.of("/").adapter.rooms) {
                 if (roomName === room && id !== socket.id) {
                     callback({
