@@ -169,7 +169,7 @@ app.post('/room/update', async (req, res) => {
         const { redis_response, record } = await updateRoomInRedis(roomId, apiKey, stripe_id)
         res.status(200).json({ redis_response, record })
     } catch (error) {
-        res.status(500).json({ error })
+        res.status(500).send(error)
     }
 })
 
