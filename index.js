@@ -108,11 +108,9 @@ io.on("connection", function (socket) {
         }
     })
 
-    socket.on('connection-request', ({ from, to, data }, callback) => {
-        io.to(to).emit('peer-connection-request', { from, to, data }, (peerName) => {
-            console.log(`Connection Request from ${{ ...data }} to ${({ ...data })}`)
-            callback(peerName)
-        })
+    socket.on('connection-request', ({ from, to, data }) => {
+        io.to(to).emit('peer-connection-request', { from, to, data })
+        console.log(`Connection Request from ${from} to ${(to)}.`)
     })
 
     socket.on('data', ({ to, from, data }) => {
