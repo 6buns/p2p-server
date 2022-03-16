@@ -229,7 +229,7 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
 }
 
 const updateRoomInRedis = (roomId, apiKey, stripe_id) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
         try {
             await client.del(roomKeyHash)
