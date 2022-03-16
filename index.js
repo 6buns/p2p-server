@@ -176,11 +176,15 @@ app.post('/room/update', async (req, res) => {
 const verifyAPIKey = async (apiKey) => {
     return new Promise(async (resolve, reject) => {
         const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
-        const doc = await keyStoreRef.doc(apiHash).get();
-        if (doc.exists) {
-            resolve(doc.data());
-        } else {
-            reject('Document does not exsists')
+        try {
+            const doc = await keyStoreRef.doc(apiHash).get();
+            if (doc.exists) {
+                resolve(doc.data());
+            } else {
+                reject('Document does not exsists')
+            }
+        } catch (error) {
+            reject(error.message)
         }
     })
 }
@@ -193,8 +197,7 @@ const getRoomFromRedis = (roomId, apiKey) => {
             console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`, data)
             resolve(data)
         } catch (error) {
-
-            reject(error)
+            reject(error.message)
         }
     })
 }
@@ -216,7 +219,7 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
             console.log(`Created room ${roomId} in redis expiring in ${validTill}.`)
             record = await chargeUser(stripe_id)
         } catch (error) {
-            reject(error)
+            reject(error.message)
         }
         resolve({ redis_response, record })
     });
@@ -230,7 +233,7 @@ const updateRoomInRedis = (roomId, apiKey, stripe_id) => {
             const data = await createRoomInRedis(roomId, apiKey, stripe_id)
             resolve(data)
         } catch (error) {
-            reject(error)
+            reject(error.message)
         }
     })
 
@@ -260,7 +263,7 @@ const chargeUser = (stripe_id) => {
             if (usageRecord) resolve(usageRecord)
             else reject('Unable to create usage record.')
         } catch (error) {
-            reject(error)
+            reject(error.message)
         }
     })
 }
