@@ -79,8 +79,8 @@ io.on("connection", function (socket) {
         { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
     ]);
 
-    socket.on('update-socket-id', ({ room, data: { id, name } }) => {
-        console.log(`Socket ID update :: room : ${room} :: name : ${name} :: ID : ${id}`)
+    socket.on('update-socket-id', ({ room, data }) => {
+        console.log(`Socket ID update :: room : ${room} :: name : ${data.name} :: ID : ${data.id}`)
         socket.to(room).emit('socket-update', data);
     })
 
