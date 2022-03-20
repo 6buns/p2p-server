@@ -170,7 +170,7 @@ app.post('/room', async (req, res) => {
     }
 })
 
-app.get('/room', async (req, res) => {
+app.post('/getroom', async (req, res) => {
     const { apiKey, roomId } = req.body
     try {
         await verifyAPIKey(apiKey);
