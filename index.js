@@ -170,6 +170,18 @@ app.post('/room', async (req, res) => {
     }
 })
 
+app.get('/room', async (req, res) => {
+    const { apiKey, roomId } = req.body
+    console.log(await client.ping())
+    try {
+        await verifyAPIKey(apiKey);
+        const data = await getRoomFromRedis(roomId, apiKey)
+        res.status(200).json(data)
+    } catch (error) {
+        res.status(500).json({ error })
+    }
+})
+
 app.post('/room/update', async (req, res) => {
     const { apiKey, roomId } = req.body
     try {
