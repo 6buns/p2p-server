@@ -176,7 +176,7 @@ app.post('/room/get', async (req, res) => {
     try {
         await verifyAPIKey(apiKey);
         const data = await getRoomFromRedis(roomId, apiKey)
-        res.status(200).json({data})
+        res.status(200).json({ data })
     } catch (error) {
         res.status(500).json({ error })
     }
@@ -214,7 +214,7 @@ const getRoomFromRedis = (roomId, apiKey) => {
         const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
         try {
             console.log(await client.ping())
-            const data = await client.get(roomKeyHash)
+            const data = JSON.parse(await client.get(roomKeyHash))
             console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`, data)
             resolve(data)
         } catch (error) {
