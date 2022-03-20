@@ -170,9 +170,11 @@ app.post('/room', async (req, res) => {
     }
 })
 
-app.post('/getroom', async (req, res) => {
-    const { apiKey, roomId } = req.body
+app.get('/room?id=:id', async (req, res) => {
+    const bearerHeader = req.headers['authorization']
     try {
+        const apiKey = bearerHeader.split(' ')[1]
+        const { id } = req.params
         await verifyAPIKey(apiKey);
         const data = await getRoomFromRedis(roomId, apiKey)
         res.status(200).json(data)
