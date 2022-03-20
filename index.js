@@ -215,7 +215,7 @@ const getRoomFromRedis = (roomId, apiKey) => {
             console.log(await client.ping())
             const data = JSON.parse(await client.get(roomKeyHash))
             console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`, data)
-            resolve(data)
+            resolve({ ...data })
         } catch (error) {
             reject(error.message)
         }
