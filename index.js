@@ -88,8 +88,7 @@ io.on("connection", function (socket) {
         // charge here room is new.
         let room, createdAt, validTill;
         try {
-            const data = await getRoomFromRedis(roomId, socket.data.api_key);
-            const dataJson = JSON.parse(data)
+            const dataJson = await getRoomFromRedis(roomId, socket.data.api_key);
             room = dataJson.roomId
             createdAt = dataJson.createdAt
             validTill = dataJson.validTill
