@@ -325,7 +325,7 @@ const saveSession = async (roomData) => {
     }
 }
 
-const chargeRoom = (room, endedTime) => {
+const chargeRoom = async (room, endedTime) => {
     const roomHash = crypto.createHash('md5').update(`${room}`).digest('hex')
     try {
         // fetch room and its details.
