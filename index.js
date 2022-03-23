@@ -89,27 +89,26 @@ io.on("connection", function (socket) {
         let room, createdAt, validTill;
         try {
             const dataJson = await getRoomFromRedis(roomId, socket.data.api_key);
-            room = dataJson.roomId
-            createdAt = dataJson.createdAt
-            validTill = dataJson.validTill
-        } catch (error) {
-            error ? callback({ error }) : callback({ err: 'Room not present' })
-        }
-
-        if (!room) {
-            callback({
-                err: 'Room not present'
-            })
-        } else {
-            socket.join(room)
-            // socket.broadcast.emit('new-peer-connected', socket.id)
-            for (const [roomName, id] of io.of("/").adapter.rooms) {
-                if (roomName === room && id !== socket.id) {
-                    callback({
-                        res: [...id]
-                    })
+            if (!dataJson) {
+                callback({
+                    error: 'Room not present'
+                })
+            } else {
+                room = dataJson.roomId
+                createdAt = dataJson.createdAt
+                validTill = dataJson.validTill
+                socket.join(room)
+                // socket.broadcast.emit('new-peer-connected', socket.id)
+                for (const [roomName, id] of io.of("/").adapter.rooms) {
+                    if (roomName === room && id !== socket.id) {
+                        callback({
+                            res: [...id]
+                        })
+                    }
                 }
             }
+        } catch (error) {
+            error ? callback({ error }) : callback({ error: 'Room not present' })
         }
     })
 
