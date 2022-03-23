@@ -84,9 +84,9 @@ io.on("connection", function (socket) {
         socket.to(room).emit('socket-update', data);
     })
 
-    socket.on('join-room', async (roomId, callback) => {
+    socket.on('join-room', async ({ roomId, name }, callback) => {
         // charge here room is new.
-        let room, createdAt, validTill;
+        let room;
         try {
             const dataJson = await getRoomFromRedis(roomId, socket.data.api_key);
             if (!dataJson) {
@@ -95,9 +95,8 @@ io.on("connection", function (socket) {
                 })
                 socket.disconnect(true)
             } else {
-                room = dataJson.roomId
-                createdAt = dataJson.createdAt
-                validTill = dataJson.validTill
+                room = dataJson.id
+                socket.data.room = { ...dataJson }
                 socket.join(room)
                 // socket.broadcast.emit('new-peer-connected', socket.id)
                 for (const [roomName, id] of io.of("/").adapter.rooms) {
@@ -107,9 +106,12 @@ io.on("connection", function (socket) {
                         })
                     }
                 }
+                socket.data.join = Date.now()
+                socket.data.name = name
             }
         } catch (error) {
             error ? callback({ error }) : callback({ error: 'Room not present' })
+            socket.disconnect(true)
         }
     })
 
@@ -134,6 +136,9 @@ io.on("connection", function (socket) {
 
     socket.on('disconnect', () => {
         console.log('Socket Left : ', socket.id, socket.adapter.sids)
+        socket.data.left = Date.now()
+        socket.data.socketId = socket.id
+        saveSession(socket.data)
     })
 });
 
@@ -143,6 +148,7 @@ io.of('/').adapter.on('create-room', (room) => {
 
 io.of('/').adapter.on('delete-room', (room) => {
     console.log(`room ${room} was deleted.`)
+    chargeRoom(room, Date.now())
 })
 
 io.of('/').adapter.on('join-room', (room, id) => {
@@ -224,22 +230,32 @@ const getRoomFromRedis = (roomId, apiKey) => {
 
 const createRoomInRedis = (roomId, apiKey, stripe_id) => {
     return new Promise(async (resolve, reject) => {
-        const validTill = Date.now() + (60 * 30 * 1000)
-        const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
+        const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
+        const roomHash = crypto.createHash('md5').update(roomId).digest('hex')
+        const createdAt = Date.now()
+        const validTill = Date.now() + 86400000
+        const sessionId = crypto.randomBytes(20).toString('hex').slice(0, 20)
+        const roomKeyHash = crypto.createHash('md5').update(`${roomId}`).digest('hex')
         let redis_response, record;
         try {
             redis_response = await client.set(roomKeyHash, JSON.stringify({
-                roomId,
-                createdAt: Date.now(),
+                id: roomId,
+                apiHash,
+                sessionId,
+                createdAt,
                 validTill,
             }), {
-                PXAT: validTill,
                 NX: true
             })
             console.log(`Created room ${roomId} in redis expiring in ${validTill}.`)
-            record = await chargeUser(stripe_id)
+            // record = await chargeUser(stripe_id)
+            await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(sessionId).set({
+                createdAt,
+                validTill,
+                peers: []
+            })
         } catch (error) {
-            reject(error.message)
+            reject(error)
         }
         resolve({ redis_response, record })
     });
@@ -259,7 +275,7 @@ const updateRoomInRedis = (roomId, apiKey, stripe_id) => {
 
 }
 
-const chargeUser = (stripe_id) => {
+const chargeUser = (stripe_id, quantity) => {
     return new Promise(async (resolve, reject) => {
         try {
             const stripe = require('stripe')('sk_test_51KNlK1SCiwhjjSk0Wh83gIWl21JdXWfH9Gs9NjQr4sos7VTNRocKbvipbqO0LfpnB6NvattHJwLJaajmxNbyAKT900X1bNAggO');
@@ -277,7 +293,7 @@ const chargeUser = (stripe_id) => {
 
             const usageRecord = await stripe.subscriptionItems.createUsageRecord(
                 subscription_id,
-                { quantity: 1, timestamp: Math.ceil(Date.now() / 1000) }
+                { quantity, timestamp: Math.ceil(Date.now() / 1000) }
             );
 
             if (usageRecord) resolve(usageRecord)
@@ -287,3 +303,81 @@ const chargeUser = (stripe_id) => {
         }
     })
 }
+
+const saveSession = (roomData) => {
+    const { stripe_id, api_key, name, socketId, room, join, left } = roomData
+    const apiHash = crypto.createHash('md5').update(api_key).digest('hex')
+    const roomHash = crypto.createHash('md5').update(room.id).digest('hex')
+
+    const peer = {
+        name: name,
+        socketId: socketId,
+        join: join,
+        left: left
+    }
+
+    try {
+        await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(room.sessionId).update({
+            peers: Firestore.FieldValue.arrayUnion({ ...peer })
+        })
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+const chargeRoom = (room, endedTime) => {
+    const roomHash = crypto.createHash('md5').update(`${room}`).digest('hex')
+    try {
+        // fetch room and its details.
+        console.log(await client.ping())
+        const { apiHash, sessionId } = JSON.parse(await client.get(roomHash))
+
+        const sessionData = await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(sessionId).get();
+        if (!sessionData.exists) {
+            console.error(`Room Data Does not exsist for :
+                room : ${room},
+                apiHash: ${apiHash},
+                sessionId: ${sessionId}
+            `)
+        }
+        const { createdAt, validTill, peers } = sessionData.data()
+        const time = 0;
+        peers.forEach(peer => {
+            if (peer.left && peer.join) {
+                time += (peer.left - peer.join)
+            } else {
+                time += endedTime - createdAt
+            }
+        })
+
+        const quantity = Math.ceil(time / 60000)
+        const apiData = await keyStoreRef.doc(apiHash).get()
+        if (!apiData.exists) {
+            console.error(`Unable to fetch API Data : ${apiHash}`)
+        }
+        
+        const { stripe_id } = apiData.data()
+
+        chargeUser(stripe_id, quantity).then(() => {
+            console.log(`User Charged`)
+        }).catch(console.error)
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+// const room = {
+//   roomId: {
+//     apiKey: "",
+//     createdAt: "",
+//     endedAt: "",
+//     peers: [
+//       {
+//         peerId: {
+//           join: "",
+//           left: "",
+//         },
+//       },
+//     ],
+//   },
+// };
