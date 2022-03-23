@@ -79,9 +79,10 @@ io.use((socket, next) => {
             const { createdAt, validTill } = data
             socket.data.room.createdAt = createdAt
             socket.data.room.validTill = validTill
+            console.log(`User : ${name} :: id : ${id} joined in room ${room}`)
             next()
-        }).catch(err => next(err))
-    }).catch((err) => next(err))
+        }).catch((err) => err ? next(err) : next('Room not Present.'))
+    }).catch((err) => err ? next(err) : next('API Key unknown'))
 })
 
 io.on("connection", function (socket) {
