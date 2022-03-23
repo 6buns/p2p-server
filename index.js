@@ -304,7 +304,7 @@ const chargeUser = (stripe_id, quantity) => {
     })
 }
 
-const saveSession = (roomData) => {
+const saveSession = async (roomData) => {
     const { stripe_id, api_key, name, socketId, room, join, left } = roomData
     const apiHash = crypto.createHash('md5').update(api_key).digest('hex')
     const roomHash = crypto.createHash('md5').update(room.id).digest('hex')
@@ -355,7 +355,7 @@ const chargeRoom = (room, endedTime) => {
         if (!apiData.exists) {
             console.error(`Unable to fetch API Data : ${apiHash}`)
         }
-        
+
         const { stripe_id } = apiData.data()
 
         chargeUser(stripe_id, quantity).then(() => {
