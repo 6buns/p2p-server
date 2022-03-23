@@ -64,52 +64,42 @@ Promise.all([pubClient.connect(), subClient.connect(), client.connect()]).then((
  */
 
 io.use((socket, next) => {
-    verifyAPIKey(socket.handshake.auth.key).then(({ api_key, stripe_id }) => {
+    const { key, room, name, id } = socket.handshake.auth;
+    verifyAPIKey(key).then(({ api_key, stripe_id }) => {
         socket.data.stripe_id = stripe_id
         socket.data.api_key = api_key
-        next()
+        socket.data.room = {
+            id: room,
+        }
+        socket.data.name = name
+        socket.data.id = id
+
+        getRoomFromRedis(room, key).then((data) => {
+            if (!data) next('Room not Present.')
+            const { createdAt, validTill } = data
+            socket.data.room.createdAt = createdAt
+            socket.data.room.validTill = validTill
+            next()
+        }).catch(err => next(err))
     }).catch((err) => next(err))
 })
 
 io.on("connection", function (socket) {
-
-    console.log('Socket Joined : ', socket.id, socket.data.api_key);
-
-    socket.emit('connection', socket.id, io.of("/").adapter.rooms.size, [
-        { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
-    ]);
+    console.log('Socket Joined : ', socket.id);
+    socket.leave(socket.id)
+    socket.join(socket.data.room.id)
+    for (const [roomName, id] of io.of("/").adapter.rooms) {
+        if (roomName === room && id !== socket.id) {
+            let res = [...id]
+            socket.emit('connection', socket.id, res, [
+                { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
+            ]);
+        }
+    }
 
     socket.on('update-socket-id', ({ room, data }) => {
         console.log(`Socket ID update :: room : ${room} :: name : ${data.name} :: ID : ${data.id}`)
         socket.to(room).emit('socket-update', data);
-    })
-
-    socket.on('join-room', async (roomId, callback) => {
-        // charge here room is new.
-        let room, createdAt, validTill;
-        try {
-            const dataJson = await getRoomFromRedis(roomId, socket.data.api_key);
-            if (!dataJson) {
-                callback({
-                    error: 'Room not present'
-                })
-            } else {
-                room = dataJson.roomId
-                createdAt = dataJson.createdAt
-                validTill = dataJson.validTill
-                socket.join(room)
-                // socket.broadcast.emit('new-peer-connected', socket.id)
-                for (const [roomName, id] of io.of("/").adapter.rooms) {
-                    if (roomName === room && id !== socket.id) {
-                        callback({
-                            res: [...id]
-                        })
-                    }
-                }
-            }
-        } catch (error) {
-            error ? callback({ error }) : callback({ error: 'Room not present' })
-        }
     })
 
     socket.on('connection-request', ({ from, to, data }) => {
