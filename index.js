@@ -193,7 +193,7 @@ const verifyAPIKey = async (apiKey) => {
                 reject('Document does not exsists')
             }
         } catch (error) {
-            reject(error.message)
+            reject(error)
         }
     })
 }
@@ -207,7 +207,7 @@ const getRoomFromRedis = (roomId, apiKey) => {
             console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`, data)
             resolve({ ...data })
         } catch (error) {
-            reject(error.message)
+            reject(error)
         }
     })
 }
