@@ -216,7 +216,7 @@ const verifyAPIKey = async (apiKey) => {
 
 const getRoomFromRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
-        const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
+        const roomKeyHash = crypto.createHash('md5').update(`${roomId}`).digest('hex')
         try {
             console.log(await client.ping())
             const data = JSON.parse(await client.get(roomKeyHash))
@@ -248,8 +248,7 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
                 NX: true
             })
             console.log(`Created room ${roomId} in redis expiring in ${validTill}.`)
-            // record = await chargeUser(stripe_id)
-            await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(sessionId).set({
+            const firestore_response = await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(sessionId).set({
                 createdAt,
                 validTill,
                 peers: []
@@ -257,7 +256,7 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
         } catch (error) {
             reject(error)
         }
-        resolve({ redis_response, record })
+        resolve({ redis_response, firestore_response })
     });
 }
 
