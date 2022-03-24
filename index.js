@@ -98,7 +98,8 @@ io.on("connection", function (socket) {
                 room = dataJson.id
                 socket.data.room = { ...dataJson }
                 socket.join(room)
-                // socket.broadcast.emit('new-peer-connected', socket.id)
+                io.in(room).emit('ping')
+                
                 for (const [roomName, id] of io.of("/").adapter.rooms) {
                     if (roomName === room && id !== socket.id) {
                         callback({
