@@ -97,6 +97,7 @@ io.on("connection", function (socket) {
             } else {
                 room = dataJson.id
                 socket.data.room = { ...dataJson }
+                socket.leave(socket.id)
                 socket.join(room)
                 // socket.broadcast.emit('new-peer-connected', socket.id)
                 for (const [roomName, id] of io.of("/").adapter.rooms) {
@@ -247,6 +248,11 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
             }), {
                 NX: true
             })
+        } catch (error) {
+            reject(error)
+        }
+
+        try {
             console.log(`Created room ${roomId} in redis expiring in ${validTill}.`)
             const firestore_response = await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(sessionId).set({
                 createdAt,
