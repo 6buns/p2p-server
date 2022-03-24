@@ -97,7 +97,6 @@ io.on("connection", function (socket) {
             } else {
                 room = dataJson.id
                 socket.data.room = { ...dataJson }
-                socket.leave(socket.id)
                 socket.join(room)
                 // socket.broadcast.emit('new-peer-connected', socket.id)
                 for (const [roomName, id] of io.of("/").adapter.rooms) {
@@ -363,9 +362,14 @@ const chargeRoom = async (room, endedTime) => {
 
         const { stripe_id } = apiData.data()
 
-        chargeUser(stripe_id, quantity).then(() => {
-            console.log(`User Charged`)
-        }).catch(console.error)
+        await chargeUser(stripe_id, quantity)
+
+        // const res = await client.del(roomHash)
+        // if (res === 1) {
+        //     console.log(`Redis Room Deleted : ${room}`)
+        // } else {
+        //     console.log(`Unable to delete Redis Room : ${room}`)
+        // }
     } catch (error) {
         console.error(error)
     }
