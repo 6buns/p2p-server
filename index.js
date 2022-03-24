@@ -84,7 +84,7 @@ io.on("connection", function (socket) {
         socket.to(room).emit('socket-update', data);
     })
 
-    socket.on('join-room', async ({ roomId, name }, callback) => {
+    socket.on('room-join', async ({ roomId, name }, callback) => {
         // charge here room is new.
         let room;
         try {
@@ -148,7 +148,7 @@ io.of('/').adapter.on('create-room', (room) => {
 
 io.of('/').adapter.on('delete-room', (room) => {
     console.log(`room ${room} was deleted.`)
-    chargeRoom(room, Date.now())
+    removeRoom(room)
 })
 
 io.of('/').adapter.on('join-room', (room, id) => {
@@ -318,7 +318,9 @@ const saveSession = async (roomData) => {
         socketId: socketId,
         join: join,
         left: left
-    }
+    };
+
+    let time = 0;
 
     try {
         await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(room.sessionId).update({
@@ -327,49 +329,28 @@ const saveSession = async (roomData) => {
     } catch (error) {
         console.error(error)
     }
+
+    try {
+        if (left && join) {
+            time += (left - join)
+        } else {
+            time += Date.now() - room.createdAt
+        }
+        const quantity = Math.ceil(time / 60000)
+        await chargeUser(stripe_id, quantity)
+    } catch (error) {
+        console.error(error)
+    }
 }
 
-const chargeRoom = async (room, endedTime) => {
-    const roomHash = crypto.createHash('md5').update(`${room}`).digest('hex')
+const removeRoom = async (room) => {
     try {
-        // fetch room and its details.
-        console.log(await client.ping())
-        const { apiHash, sessionId } = JSON.parse(await client.get(roomHash))
-
-        const sessionData = await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(sessionId).get();
-        if (!sessionData.exists) {
-            console.error(`Room Data Does not exsist for :
-                room : ${room},
-                apiHash: ${apiHash},
-                sessionId: ${sessionId}
-            `)
+        const res = await client.del(roomHash)
+        if (res === 1) {
+            console.log(`Redis Room Deleted : ${room}`)
+        } else {
+            console.log(`Unable to delete Redis Room : ${room}`)
         }
-        const { createdAt, validTill, peers } = sessionData.data()
-        const time = 0;
-        peers.forEach(peer => {
-            if (peer.left && peer.join) {
-                time += (peer.left - peer.join)
-            } else {
-                time += endedTime - createdAt
-            }
-        })
-
-        const quantity = Math.ceil(time / 60000)
-        const apiData = await keyStoreRef.doc(apiHash).get()
-        if (!apiData.exists) {
-            console.error(`Unable to fetch API Data : ${apiHash}`)
-        }
-
-        const { stripe_id } = apiData.data()
-
-        await chargeUser(stripe_id, quantity)
-
-        // const res = await client.del(roomHash)
-        // if (res === 1) {
-        //     console.log(`Redis Room Deleted : ${room}`)
-        // } else {
-        //     console.log(`Unable to delete Redis Room : ${room}`)
-        // }
     } catch (error) {
         console.error(error)
     }
