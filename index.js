@@ -17,6 +17,7 @@ const server = app.listen(PORT, function () {
 });
 const db = new Firestore();
 const keyStoreRef = db.collection('keyStore')
+const sessionsRef = db.collection('sessions')
 
 // Static files
 app.use(express.static("public"));
@@ -55,93 +56,130 @@ const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${proc
 const subClient = pubClient.duplicate();
 const client = pubClient.duplicate();
 
-Promise.all([pubClient.connect(), subClient.connect(), client.connect()]).then(() => {
+Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
 }).catch(err => console.error(err));
 
+Promise.all([client.connect()]).then(() => console.log('Redis Client Connected')).catch(err => console.error(err))
+
 /**
- * charge the stripe_id for each new room creation.
+ * charge the stripeId for each new room creation.
  */
 
 io.use((socket, next) => {
-    verifyAPIKey(socket.handshake.auth.key).then(({ api_key, stripe_id }) => {
-        socket.data.stripe_id = stripe_id
-        socket.data.api_key = api_key
+    verifySecretKey(socket.handshake.auth.key).then(({ apiKey, stripeId, secretKey }) => {
+        socket.data.stripeId = stripeId
+        socket.data.apiKey = apiKey
+        socket.data.secret = secretKey
         next()
     }).catch((err) => next(err))
 })
 
 io.on("connection", function (socket) {
 
-    console.log('Socket Joined : ', socket.id, socket.data.api_key);
+    console.log('Socket Joined : ', socket.id, socket.data.apiKey);
 
     socket.emit('connection', socket.id, io.of("/").adapter.rooms.size, [
         { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
     ]);
 
-    socket.on('update-socket-id', ({ room, data }) => {
-        console.log(`Socket ID update :: room : ${room} :: name : ${data.name} :: ID : ${data.id}`)
-        socket.to(room).emit('socket-update', data);
-    })
+    socket.on('message', () => handleMessage({ type, from, to, room, token }, func, socket))
 
-    socket.on('room-join', async ({ roomId, name }, callback) => {
-        // charge here room is new.
-        let room;
-        try {
-            const dataJson = await getRoomFromRedis(roomId, socket.data.api_key);
-            if (!dataJson) {
-                callback({
-                    error: 'Room not present'
-                })
-                socket.disconnect(true)
-            } else {
-                room = dataJson.id
-                socket.data.room = { ...dataJson }
-                socket.join(room)
-                io.in(room).emit('ping')
-                
-                for (const [roomName, id] of io.of("/").adapter.rooms) {
-                    if (roomName === room && id !== socket.id) {
-                        callback({
-                            res: [...id]
-                        })
-                    }
-                }
-                socket.data.join = Date.now()
-                socket.data.name = name
-            }
-        } catch (error) {
-            error ? callback({ error }) : callback({ error: 'Room not present' })
-            socket.disconnect(true)
-        }
-    })
+    const stats =
 
-    socket.on('connection-request', ({ from, to, data }) => {
-        io.to(to).emit('peer-connection-request', { from, to, data })
-        console.log(`Connection Request from ${from} to ${(to)}.`)
-    })
-
-    socket.on('data', ({ to, from, data }) => {
-        console.log(`From : ${from} :: To : ${to} :: sdp : ${data?.sdp?.type} :: candidate : ${data?.candidate}`)
-        if (to) {
-            io.to(to).emit('data', { to, from, data })
-        } else {
-            socket.emit('error', 'You are alone nobody to connect to.');
-        }
-    })
-
-    socket.on('track-update', ({ id, update, room }) => {
-        console.log(`Track : ${id} :: room : ${room} :: update : ${update}`)
-        socket.to(room).emit('track-update', { id, update });
-    })
-
-    socket.on('disconnect', () => {
-        console.log('Socket Left : ', socket.id, socket.adapter.sids)
-        socket.data.left = Date.now()
-        socket.data.socketId = socket.id
-        saveSession(socket.data)
-    })
+        socket.on('disconnect', () => {
+            console.log('Socket Left : ', socket.id, socket.adapter.sids)
+            socket.data.left = Date.now()
+            socket.data.socketId = socket.id
+            saveSession(socket.data)
+        })
 });
+
+const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
+    let messageType = undefined;
+
+    if (room) {
+        messageType = 'announce';
+    }
+    if ((from && to)) {
+        messageType = 'direct';
+    }
+    if (type === 'PONG') {
+        messageType = 'process';
+    }
+    if (func || type === 'room-join') {
+        messageType = 'callback';
+    }
+
+    switch (messageType) {
+        case 'direct': {
+            if (type === 'connection-request') {
+                if (to) {
+                    io.to(to).emit('message', { type: 'peer-connection-request', from, to, room, token })
+                } else {
+                    socket.emit('error', 'You are alone nobody to connect to.');
+                }
+            } else {
+                if (to) {
+                    io.to(to).emit('message', { type, from, to, room, token })
+                } else {
+                    socket.emit('error', 'You are alone nobody to connect to.');
+                }
+            }
+            break;
+        }
+        case 'announce': {
+            if (type === 'update-socket-id') {
+                socket.to(room).emit('message', { type: 'socket-update', from, to, room, token });
+            } else {
+                socket.to(room).emit('message', { type, from, to, room, token });
+            }
+            break;
+        }
+        case 'callback': {
+            // charge here room is new.
+            let room;
+            try {
+                const dataJson = await getRoomFromRedis(room, socket.data.apiKey);
+                if (!dataJson) {
+                    func({
+                        error: 'Room not present'
+                    })
+                    socket.disconnect(true)
+                } else {
+                    room = dataJson.id
+                    socket.data.room = { ...dataJson }
+                    socket.join(room)
+                    io.in(room).emit('ping')
+
+                    for (const [roomName, id] of io.of("/").adapter.rooms) {
+                        if (roomName === room && id !== socket.id) {
+                            func({
+                                res: [...id]
+                            })
+                        }
+                    }
+                    socket.data.join = Date.now()
+                    socket.data.name = dataJson.name
+                }
+            } catch (error) {
+                error ? func({ error }) : func({ error: 'Room not present' })
+                socket.disconnect(true)
+            }
+            break;
+        }
+        case 'process': {
+            if (type === 'PONG') {
+                jwt.verify(token, socket.data.secret, function (err, data) {
+                    saveToDB(data, socket.data)
+                });
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
 
 io.of('/').adapter.on('create-room', (room) => {
     console.log(`room ${room} was created.`);
@@ -164,38 +202,21 @@ io.of('/').adapter.on('leave-room', (room, id) => {
 /**
  * Verify API key, create a room with provided room name.
  */
-app.post('/room', async (req, res) => {
-    const { apiKey, roomId } = req.body
-    console.log(await client.ping())
-    try {
-        const { stripe_id } = await verifyAPIKey(apiKey);
-        const { redis_response, record } = await createRoomInRedis(roomId, apiKey, stripe_id)
-        res.status(200).json({ redis_response, record })
-    } catch (error) {
-        res.status(500).json({ error })
-    }
-})
 
-app.post('/room/get', async (req, res) => {
-    const { apiKey, roomId } = req.body
-    console.log(await client.ping())
-    try {
-        await verifyAPIKey(apiKey);
-        const data = await getRoomFromRedis(roomId, apiKey)
-        res.status(200).json({ data })
-    } catch (error) {
-        res.status(500).json({ error })
+app.post('/secret', async (req, res) => {
+    const { apiKey } = req.body
+    if (!apiKey) {
+        res.status(500).send('API Key Missing')
     }
-})
-
-app.post('/room/update', async (req, res) => {
-    const { apiKey, roomId } = req.body
     try {
-        const { stripe_id } = await verifyAPIKey(apiKey);
-        const { redis_response, record } = await updateRoomInRedis(roomId, apiKey, stripe_id)
-        res.status(200).json({ redis_response, record })
+        await verifyAPIKey(apiKey)
+        const secretKey = await generateSecret(apiKey)
+        res.status(200).json({ secretKey })
     } catch (error) {
-        res.status(500).send(error)
+        res.status(500).json({
+            message: "Invalid or Incorrect API key",
+            error
+        })
     }
 })
 
@@ -215,12 +236,21 @@ const verifyAPIKey = async (apiKey) => {
     })
 }
 
+const verifySecretKey = async (secret) => {
+    return await keyStoreRef.where('secretKey', '==', secret).get().then(doc => doc.data()).catch(console.error)
+}
+
 const getRoomFromRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
         const roomKeyHash = crypto.createHash('md5').update(`${roomId}`).digest('hex')
+        let data = {};
         try {
             console.log(await client.ping())
-            const data = JSON.parse(await client.get(roomKeyHash))
+            data = JSON.parse(await client.get(roomKeyHash))
+            if (!data) {
+                // no room data
+                data = await createRoomInRedis(roomId, apiKey)
+            }
             console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`, data)
             resolve({ ...data })
         } catch (error) {
@@ -229,23 +259,39 @@ const getRoomFromRedis = (roomId, apiKey) => {
     })
 }
 
-const createRoomInRedis = (roomId, apiKey, stripe_id) => {
+const generateSecret = (apiKey) => {
+    const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
+    const randomString = crypto.randomBytes(20).toString('hex').slice(0, 20)
+    const secretKey = crypto.createHmac('sha256', apiHash).update(randomString).digest("base64")
+
+    return keyStoreRef.doc(apiHash).set({
+        secretKey,
+    }).then(() => {
+        return secretKey
+    }).catch(console.error)
+}
+
+const createRoomInRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
+        if (!roomId) {
+            roomId = crypto.randomBytes(5).toString('hex').slice(0, 5)
+        }
         const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
-        const roomHash = crypto.createHash('md5').update(roomId).digest('hex')
         const createdAt = Date.now()
         const validTill = Date.now() + 86400000
         const sessionId = crypto.randomBytes(20).toString('hex').slice(0, 20)
+        const sessionHash = crypto.createHash('md5').update(sessionId).digest('hex')
         const roomKeyHash = crypto.createHash('md5').update(`${roomId}`).digest('hex')
         let redis_response, record;
+        const roomData = {
+            id: roomId,
+            apiHash,
+            sessionId,
+            createdAt,
+            validTill,
+        }
         try {
-            redis_response = await client.set(roomKeyHash, JSON.stringify({
-                id: roomId,
-                apiHash,
-                sessionId,
-                createdAt,
-                validTill,
-            }), {
+            redis_response = await client.set(roomKeyHash, JSON.stringify({ ...roomData }), {
                 NX: true
             })
         } catch (error) {
@@ -254,39 +300,24 @@ const createRoomInRedis = (roomId, apiKey, stripe_id) => {
 
         try {
             console.log(`Created room ${roomId} in redis expiring in ${validTill}.`)
-            const firestore_response = await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(sessionId).set({
-                createdAt,
-                validTill,
+            const firestore_response = await sessionsRef.doc(sessionHash).set({
+                ...roomData,
                 peers: []
             })
         } catch (error) {
             reject(error)
         }
-        resolve({ redis_response, firestore_response })
+        resolve({ redis_response, firestore_response, roomData })
     });
 }
 
-const updateRoomInRedis = (roomId, apiKey, stripe_id) => {
-    return new Promise(async (resolve, reject) => {
-        const roomKeyHash = crypto.createHash('md5').update(`${apiKey}${roomId}`).digest('hex')
-        try {
-            await client.del(roomKeyHash)
-            const data = await createRoomInRedis(roomId, apiKey, stripe_id)
-            resolve(data)
-        } catch (error) {
-            reject(error.message)
-        }
-    })
-
-}
-
-const chargeUser = (stripe_id, quantity) => {
+const chargeUser = (stripeId, quantity) => {
     return new Promise(async (resolve, reject) => {
         try {
             const stripe = require('stripe')('sk_test_51KNlK1SCiwhjjSk0Wh83gIWl21JdXWfH9Gs9NjQr4sos7VTNRocKbvipbqO0LfpnB6NvattHJwLJaajmxNbyAKT900X1bNAggO');
 
             const subscription_list = await stripe.subscriptions.list({
-                customer: stripe_id
+                customer: stripeId
             })
 
             const subscription_status = subscription_list.data[0].status
@@ -310,8 +341,8 @@ const chargeUser = (stripe_id, quantity) => {
 }
 
 const saveSession = async (roomData) => {
-    const { stripe_id, api_key, name, socketId, room, join, left } = roomData
-    const apiHash = crypto.createHash('md5').update(api_key).digest('hex')
+    const { stripeId, apiKey, name, socketId, room, join, left } = roomData
+    const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
     const roomHash = crypto.createHash('md5').update(room.id).digest('hex')
 
     const peer = {
@@ -338,7 +369,7 @@ const saveSession = async (roomData) => {
             time += Date.now() - room.createdAt
         }
         const quantity = Math.ceil(time / 60000)
-        await chargeUser(stripe_id, quantity)
+        await chargeUser(stripeId, quantity)
     } catch (error) {
         console.error(error)
     }
@@ -357,18 +388,12 @@ const removeRoom = async (room) => {
     }
 }
 
-// const room = {
-//   roomId: {
-//     apiKey: "",
-//     createdAt: "",
-//     endedAt: "",
-//     peers: [
-//       {
-//         peerId: {
-//           join: "",
-//           left: "",
-//         },
-//       },
-//     ],
-//   },
-// };
+const saveToDB = async (data, user) => {
+    // apiKey, stripeId, secret, join, left, name, room: { id: roomId, apiHash, sessionId, createdAt, validTill }
+    const { room: { sessionId } } = user;
+
+    const sessionHash = crypto.createHash('md5').update(sessionId).digest('hex')
+    return await sessionsRef.doc(sessionHash).collection('stats').add({
+        ...data
+    })
+}
