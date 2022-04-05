@@ -17,7 +17,7 @@
     "express": "^4.17.2",
     "redis": "^4.0.4",
     "socket.io": "^4.4.0",
-    "jsonwebtoken": "^8.5.1",
+    "jose": "^4.6.0",
     "stripe": "^8.209.0"
   },
   "devDependencies": {

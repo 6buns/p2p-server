@@ -7,6 +7,7 @@ const { createClient } = require("redis");
 const { Firestore } = require("@google-cloud/firestore");
 require('dotenv').config()
 require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: true } });
+const jose = require('jose')
 
 // App setup
 const PORT = process.env.PORT || 8080;
@@ -170,9 +171,12 @@ const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
         }
         case 'process': {
             if (type === 'PONG') {
-                jwt.verify(token, socket.data.secret, function (err, data) {
+                try {
+                    const data = await jose.jwtVerify(token, socket.data.secret)
                     saveToDB(data, socket.data)
-                });
+                } catch (error) {
+                    console.error(error)
+                }
             }
             break;
         }
@@ -261,8 +265,7 @@ const getRoomFromRedis = (roomId, apiKey) => {
 
 const generateSecret = (apiKey) => {
     const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
-    const randomString = crypto.randomBytes(20).toString('hex').slice(0, 20)
-    const secretKey = crypto.createHmac('sha256', apiHash).update(randomString).digest("base64")
+    const secretKey = await jose.generateSecret('ES256')
 
     return keyStoreRef.doc(apiHash).set({
         secretKey,
