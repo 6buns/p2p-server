@@ -267,7 +267,7 @@ const generateSecret = (apiKey) => {
     const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
     const secretKey = await jose.generateSecret('ES256')
 
-    return keyStoreRef.doc(apiHash).set({
+    return keyStoreRef.doc(apiHash).update({
         secretKey,
     }).then(() => {
         return secretKey
