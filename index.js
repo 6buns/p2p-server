@@ -288,9 +288,10 @@ const generateSecret = async (apiKey) => {
 
     console.log(secretKey)
 
-    return keyStoreRef.doc(apiHash).set({
+    return await keyStoreRef.doc(apiHash).set({
         secretKey,
     }, { merge: true }).then(() => {
+        console.log(secretKey)
         return secretKey
     }).catch(error)
 }
