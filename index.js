@@ -68,6 +68,11 @@ Promise.all([client.connect()]).then(() => console.log('Redis Client Connected')
  */
 
 io.use((socket, next) => {
+    if (socket.handshake.auth.key === 'DEMO') {
+        if (!(socket.io.engine.hostname.match('6buns.com/demo'))) {
+            next('Unauthorised Access', socket)
+        }
+    }
     verifySecretKey(socket.handshake.auth.key).then(({ apiKey, stripeId, secretKey }) => {
         socket.data.stripeId = stripeId
         socket.data.apiKey = apiKey
