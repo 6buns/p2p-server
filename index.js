@@ -286,14 +286,14 @@ const generateSecret = async (apiKey) => {
     // const secretKey = await jose.generateSecret('HS256')
     const secretKey = crypto.createSecretKey(apiHash, 'utf-8')
 
-    console.log(secretKey)
+    return secretKey
 
-    return await keyStoreRef.doc(apiHash).set({
-        secretKey,
-    }, { merge: true }).then(() => {
-        console.log(secretKey)
-        return secretKey
-    }).catch(error)
+    // return await keyStoreRef.doc(apiHash).set({
+    //     secretKey,
+    // }, { merge: true }).then(() => {
+    //     console.log(secretKey)
+    //     return secretKey
+    // }).catch(error)
 }
 
 const createRoomInRedis = (roomId, apiKey) => {
