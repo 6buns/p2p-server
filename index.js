@@ -286,9 +286,7 @@ const generateSecret = async (apiKey) => {
     // const secretKey = await jose.generateSecret('HS256')
     const secretKey = crypto.createSecretKey(apiHash, 'utf-8')
 
-    return crypto.KeyObject(secretKey).export({
-        format: 'jwk'
-    })
+    return crypto.KeyObject(secretKey).export('jwk')
 
     // return await keyStoreRef.doc(apiHash).set({
     //     secretKey,
