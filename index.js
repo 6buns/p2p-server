@@ -247,7 +247,10 @@ const verifyAPIKey = async (apiKey) => {
 
 const verifySecretKey = async (secret) => {
     console.log(secret)
-    return await keyStoreRef.where('secretKey', '==', secret).get().then(docs => docs[0].data()).catch(console.error)
+    return await keyStoreRef.where('secretKey', '==', secret).get().then((docs) => {
+        console.log(docs.empty);
+        return docs[0].data();
+    }).catch(console.error)
 }
 
 const getRoomFromRedis = (roomId, apiKey) => {
