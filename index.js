@@ -289,7 +289,7 @@ const generateSecret = async (apiKey) => {
         secretKey,
     }, { merge: true }).then(() => {
         return secretKey
-    }).catch(console.error)
+    }).catch(error)
 }
 
 const createRoomInRedis = (roomId, apiKey) => {
