@@ -64,7 +64,7 @@ Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
 Promise.all([client.connect()]).then(() => console.log('Redis Client Connected')).catch(err => console.error(err))
 
 /**
- * charge the stripeId for each new room creation.
+ * charge the customerId for each new room creation.
  */
 
 io.use((socket, next) => {
@@ -73,8 +73,8 @@ io.use((socket, next) => {
             next('Unauthorised Access', socket)
         }
     }
-    verifySecretKey(socket.handshake.auth.key).then(({ apiKey, stripeId, secretKey }) => {
-        socket.data.stripeId = stripeId
+    verifySecretKey(socket.handshake.auth.key).then(({ apiKey, customerId, secretKey }) => {
+        socket.data.customerId = customerId
         socket.data.apiKey = apiKey
         socket.data.secret = secretKey
         next()
@@ -319,13 +319,13 @@ const createRoomInRedis = (roomId, apiKey) => {
     });
 }
 
-const chargeUser = (stripeId, quantity) => {
+const chargeUser = (customerId, quantity) => {
     return new Promise(async (resolve, reject) => {
         try {
             const stripe = require('stripe')('sk_test_51KNlK1SCiwhjjSk0Wh83gIWl21JdXWfH9Gs9NjQr4sos7VTNRocKbvipbqO0LfpnB6NvattHJwLJaajmxNbyAKT900X1bNAggO');
 
             const subscription_list = await stripe.subscriptions.list({
-                customer: stripeId
+                customer: customerId
             })
 
             const subscription_status = subscription_list.data[0].status
@@ -349,7 +349,7 @@ const chargeUser = (stripeId, quantity) => {
 }
 
 const saveSession = async (roomData) => {
-    const { stripeId, apiKey, name, socketId, room, join, left } = roomData
+    const { customerId, apiKey, name, socketId, room, join, left } = roomData
     const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
     const roomHash = crypto.createHash('md5').update(room.id).digest('hex')
 
@@ -377,7 +377,7 @@ const saveSession = async (roomData) => {
             time += Date.now() - room.createdAt
         }
         const quantity = Math.ceil(time / 60000)
-        await chargeUser(stripeId, quantity)
+        await chargeUser(customerId, quantity)
     } catch (error) {
         console.error(error)
     }
@@ -397,7 +397,7 @@ const removeRoom = async (room) => {
 }
 
 const saveToDB = async (data, user) => {
-    // apiKey, stripeId, secret, join, left, name, room: { id: roomId, apiHash, sessionId, createdAt, validTill }
+    // apiKey, customerId, secret, join, left, name, room: { id: roomId, apiHash, sessionId, createdAt, validTill }
     const { room: { sessionId } } = user;
 
     const sessionHash = crypto.createHash('md5').update(sessionId).digest('hex')
