@@ -283,7 +283,8 @@ const getRoomFromRedis = (roomId, apiKey) => {
 
 const generateSecret = async (apiKey) => {
     const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
-    const secretKey = await jose.generateSecret('HS256')
+    // const secretKey = await jose.generateSecret('HS256')
+    const secretKey = crypto.createSecretKey(apiHash, 'utf-8')
 
     return keyStoreRef.doc(apiHash).set({
         secretKey,
