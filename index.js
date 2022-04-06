@@ -246,6 +246,7 @@ const verifyAPIKey = async (apiKey) => {
 }
 
 const verifySecretKey = async (secret) => {
+    console.log(secret)
     return await keyStoreRef.where('secretKey', '==', secret).get().then(docs => docs[0].data()).catch(console.error)
 }
 
