@@ -111,7 +111,7 @@ const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
     if (type === 'PONG') {
         messageType = 'process';
     }
-    if (func || type === 'room-join') {
+    if (func && type === 'room-join') {
         messageType = 'callback';
     }
 
@@ -165,6 +165,7 @@ const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
                     }
                     socket.data.join = Date.now()
                     socket.data.name = dataJson.name
+                    console.table({ ...socket.data })
                 }
             } catch (error) {
                 error ? func({ error }) : func({ error: 'Room not present' })
