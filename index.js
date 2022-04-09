@@ -89,7 +89,7 @@ io.on("connection", function (socket) {
         { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
     ]);
 
-    socket.on('message', () => handleMessage({ type, from, to, room, token }, func, socket))
+    socket.on('message', () => handleMessage(obj, func, socket))
 
     const stats =
 
