@@ -102,17 +102,17 @@ io.on("connection", function (socket) {
 const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
     let messageType = undefined;
 
-    if (room) {
-        messageType = 'announce';
-    }
     if ((from && to)) {
         messageType = 'direct';
     }
+    if (room) {
+        messageType = 'announce';
+    }
+    if (type === 'room-join') {
+        messageType = 'callback';
+    }
     if (type === 'PONG') {
         messageType = 'process';
-    }
-    if (func && type === 'room-join') {
-        messageType = 'callback';
     }
 
     switch (messageType) {
@@ -154,7 +154,6 @@ const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
                     room = dataJson.id
                     socket.data.room = { ...dataJson }
                     socket.join(room)
-                    // io.in(room).emit('ping')
 
                     for (const [roomName, id] of io.of("/").adapter.rooms) {
                         if (roomName === room && id !== socket.id) {
