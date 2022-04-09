@@ -177,7 +177,7 @@ const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
         case 'process': {
             if (type === 'PONG') {
                 try {
-                    const data = await jose.jwtVerify(token, socket.data.secret)
+                    const data = JSON.parse(atob(token))
                     saveToDB(data, socket.data)
                 } catch (error) {
                     console.error(error)
@@ -283,16 +283,14 @@ const getRoomFromRedis = (roomId, apiKey) => {
 
 const generateSecret = async (apiKey) => {
     const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
-    const secretKey = await jose.generateSecret('HS256', { extractable: true })
+    const secretKey = crypto.randomBytes(9).toString('hex').slice(0, 9)
 
-    return secretKey
-
-    // return await keyStoreRef.doc(apiHash).set({
-    //     secretKey,
-    // }, { merge: true }).then(() => {
-    //     console.log(secretKey)
-    //     return secretKey
-    // }).catch(error)
+    return await keyStoreRef.doc(apiHash).set({
+        secretKey,
+    }, { merge: true }).then(() => {
+        console.log(secretKey)
+        return secretKey
+    }).catch(error)
 }
 
 const createRoomInRedis = (roomId, apiKey) => {
