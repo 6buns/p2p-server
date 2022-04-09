@@ -154,7 +154,7 @@ const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
                     room = dataJson.id
                     socket.data.room = { ...dataJson }
                     socket.join(room)
-                    io.in(room).emit('ping')
+                    // io.in(room).emit('ping')
 
                     for (const [roomName, id] of io.of("/").adapter.rooms) {
                         if (roomName === room && id !== socket.id) {
@@ -409,7 +409,7 @@ const removeRoom = async (room) => {
     }
 }
 
-const saveToDB = async (data, user) => {
+const saveToDB = async (data = {}, user) => {
     // apiKey, customerId, secret, join, left, name, room: { id: roomId, apiHash, sessionId, createdAt, validTill }
     const { room: { sessionId } } = user;
 
