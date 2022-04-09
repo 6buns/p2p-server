@@ -287,7 +287,7 @@ const generateSecret = async (apiKey) => {
         secretKey,
     }, { merge: true }).then(() => {
         console.log(secretKey)
-    }).catch(error)
+    }).catch((e) => { return e })
 
     return secretKey
 }
