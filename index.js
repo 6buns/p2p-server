@@ -398,6 +398,7 @@ const saveSession = async (roomData) => {
 }
 
 const removeRoom = async (room) => {
+    const roomKeyHash = crypto.createHash('md5').update(`${room}`).digest('hex')
     try {
         const res = await client.del(roomHash)
         if (res === 1) {
