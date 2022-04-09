@@ -91,14 +91,12 @@ io.on("connection", function (socket) {
 
     socket.on('message', ({ type, from, to, room, token }, func) => handleMessage({ type, from, to, room, token }, func, socket))
 
-    const stats =
-
-        socket.on('disconnect', () => {
-            console.log('Socket Left : ', socket.id, socket.adapter.sids)
-            socket.data.left = Date.now()
-            socket.data.socketId = socket.id
-            saveSession(socket.data)
-        })
+    socket.on('disconnect', () => {
+        console.log('Socket Left : ', socket.id, socket.adapter.sids)
+        socket.data.left = Date.now()
+        socket.data.socketId = socket.id
+        saveSession(socket.data)
+    })
 });
 
 const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
