@@ -283,7 +283,7 @@ const generateSecret = async (apiKey) => {
     const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
     const secretKey = crypto.randomBytes(9).toString('hex').slice(0, 9)
 
-    return await keyStoreRef.doc(apiHash).set({
+    return keyStoreRef.doc(apiHash).set({
         secretKey,
     }, { merge: true }).then(() => {
         console.log(secretKey)
