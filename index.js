@@ -283,12 +283,13 @@ const generateSecret = async (apiKey) => {
     const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
     const secretKey = crypto.randomBytes(9).toString('hex').slice(0, 9)
 
-    return keyStoreRef.doc(apiHash).set({
+    await keyStoreRef.doc(apiHash).set({
         secretKey,
     }, { merge: true }).then(() => {
         console.log(secretKey)
-        return secretKey
     }).catch(error)
+
+    return secretKey
 }
 
 const createRoomInRedis = (roomId, apiKey) => {
