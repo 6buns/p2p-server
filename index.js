@@ -1,3 +1,10 @@
+import { handleMessage } from './src/handleMessage.js';
+import { verifyAPIKey } from './verifyAPIKey';
+import { verifySecretKey } from './src/firestore/verifySecretKey';
+import { generateSecret } from './generateSecret';
+import { saveSession } from './saveSession';
+import { removeRoom } from './removeRoom';
+
 const cors = require('cors');
 const crypto = require('crypto');
 const express = require("express");
@@ -17,8 +24,8 @@ const server = app.listen(PORT, function () {
     console.log(`http://localhost:${PORT}`);
 });
 const db = new Firestore();
-const keyStoreRef = db.collection('keyStore')
-const sessionsRef = db.collection('sessions')
+export const keyStoreRef = db.collection('keyStore')
+export const sessionsRef = db.collection('sessions')
 
 // Static files
 app.use(express.static("public"));
@@ -47,7 +54,7 @@ const getTURNCredentials = (name, secret) => {
 }
 
 // Socket setup
-const io = socket(server, {
+export const io = socket(server, {
     cors: {
         origin: ['*'],
     }
@@ -55,7 +62,7 @@ const io = socket(server, {
 
 const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
 const subClient = pubClient.duplicate();
-const client = pubClient.duplicate();
+export const client = pubClient.duplicate();
 
 Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
@@ -99,95 +106,6 @@ io.on("connection", function (socket) {
     })
 });
 
-const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
-    let messageType = undefined;
-
-    if ((from && to)) {
-        messageType = 'direct';
-    }
-    if (room) {
-        messageType = 'announce';
-    }
-    if (type === 'room-join') {
-        messageType = 'callback';
-    }
-    if (type === 'PONG') {
-        messageType = 'process';
-    }
-
-    switch (messageType) {
-        case 'direct': {
-            if (type === 'connection-request') {
-                if (to) {
-                    io.to(to).emit('message', { type: 'peer-connection-request', from, to, room, token })
-                } else {
-                    socket.emit('error', 'You are alone nobody to connect to.');
-                }
-            } else {
-                if (to) {
-                    io.to(to).emit('message', { type, from, to, room, token })
-                } else {
-                    socket.emit('error', 'You are alone nobody to connect to.');
-                }
-            }
-            break;
-        }
-        case 'announce': {
-            if (type === 'update-socket-id') {
-                socket.to(room).emit('message', { type: 'socket-update', from, to, room, token });
-            } else {
-                socket.to(room).emit('message', { type, from, to, room, token });
-            }
-            break;
-        }
-        case 'callback': {
-            // charge here room is new.
-            let room;
-            try {
-                const dataJson = await getRoomFromRedis(room, socket.data.apiKey);
-                if (!dataJson) {
-                    func({
-                        error: 'Room not present'
-                    })
-                    socket.disconnect(true)
-                } else {
-                    room = dataJson.id
-                    socket.data.room = { ...dataJson }
-                    socket.join(room)
-
-                    for (const [roomName, id] of io.of("/").adapter.rooms) {
-                        if (roomName === room && id !== socket.id) {
-                            func({
-                                res: [...id]
-                            })
-                        }
-                    }
-                    socket.data.join = Date.now()
-                    socket.data.name = dataJson.name
-                    console.table({ ...socket.data })
-                }
-            } catch (error) {
-                error ? func({ error }) : func({ error: 'Room not present' })
-                socket.disconnect(true)
-            }
-            break;
-        }
-        case 'process': {
-            if (type === 'PONG') {
-                try {
-                    const data = JSON.parse(atob(token))
-                    saveToDB(data, socket.data)
-                } catch (error) {
-                    console.error(error)
-                }
-            }
-            break;
-        }
-        default:
-            break;
-    }
-}
-
 io.of('/').adapter.on('create-room', (room) => {
     console.log(`room ${room} was created.`);
 })
@@ -226,196 +144,3 @@ app.post('/secret', async (req, res) => {
         })
     }
 })
-
-const verifyAPIKey = async (apiKey) => {
-    return new Promise(async (resolve, reject) => {
-        const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
-        try {
-            const doc = await keyStoreRef.doc(apiHash).get();
-            if (doc.exists) {
-                resolve(doc.data());
-            } else {
-                reject('Document does not exsists')
-            }
-        } catch (error) {
-            reject(error.message)
-        }
-    })
-}
-
-const verifySecretKey = async (secret) => {
-    console.log(secret)
-    try {
-        const snapshot = await keyStoreRef.where('secretKey', '==', secret).get()
-        if (snapshot.empty) {
-            return new Error('No Data related to Secret present')
-        }
-        snapshot.forEach(doc => {
-            console.log(doc.id, '=>', doc.data());
-        });
-        return snapshot[0].data()
-    } catch (error) {
-        return error
-    }
-
-}
-
-const getRoomFromRedis = (roomId, apiKey) => {
-    return new Promise(async (resolve, reject) => {
-        const roomKeyHash = crypto.createHash('md5').update(`${roomId}`).digest('hex')
-        let data = {};
-        try {
-            console.log(await client.ping())
-            data = JSON.parse(await client.get(roomKeyHash))
-            if (!data) {
-                // no room data
-                data = await createRoomInRedis(roomId, apiKey)
-            }
-            console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`, data)
-            resolve({ ...data })
-        } catch (error) {
-            reject(error.message)
-        }
-    })
-}
-
-const generateSecret = async (apiKey) => {
-    const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
-    const secretKey = crypto.randomBytes(9).toString('hex').slice(0, 9)
-
-    await keyStoreRef.doc(apiHash).set({
-        secretKey,
-    }, { merge: true }).then(() => {
-        console.log(secretKey)
-    }).catch((e) => { return e })
-
-    return secretKey
-}
-
-const createRoomInRedis = (roomId, apiKey) => {
-    return new Promise(async (resolve, reject) => {
-        if (!roomId) {
-            roomId = crypto.randomBytes(5).toString('hex').slice(0, 5)
-        }
-        const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
-        const createdAt = Date.now()
-        const validTill = Date.now() + 86400000
-        const sessionId = crypto.randomBytes(20).toString('hex').slice(0, 20)
-        const sessionHash = crypto.createHash('md5').update(sessionId).digest('hex')
-        const roomKeyHash = crypto.createHash('md5').update(`${roomId}`).digest('hex')
-        let redis_response, record;
-        const roomData = {
-            id: roomId,
-            apiHash,
-            sessionId,
-            createdAt,
-            validTill,
-        }
-        try {
-            redis_response = await client.set(roomKeyHash, JSON.stringify({ ...roomData }), {
-                NX: true
-            })
-        } catch (error) {
-            reject(error)
-        }
-
-        try {
-            console.log(`Created room ${roomId} in redis expiring in ${validTill}.`)
-            const firestore_response = await sessionsRef.doc(sessionHash).set({
-                ...roomData,
-                peers: []
-            })
-        } catch (error) {
-            reject(error)
-        }
-        resolve({ redis_response, firestore_response, roomData })
-    });
-}
-
-const chargeUser = (customerId, quantity) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const stripe = require('stripe')('sk_test_51KNlK1SCiwhjjSk0Wh83gIWl21JdXWfH9Gs9NjQr4sos7VTNRocKbvipbqO0LfpnB6NvattHJwLJaajmxNbyAKT900X1bNAggO');
-
-            const subscription_list = await stripe.subscriptions.list({
-                customer: customerId
-            })
-
-            const subscription_status = subscription_list.data[0].status
-            const subscription_id = subscription_list.data[0].items.data[0].id
-
-            if (subscription_status !== 'active') {
-                reject(`Subscription should be active but is ${subscription_status}`)
-            }
-
-            const usageRecord = await stripe.subscriptionItems.createUsageRecord(
-                subscription_id,
-                { quantity, timestamp: Math.ceil(Date.now() / 1000) }
-            );
-
-            if (usageRecord) resolve(usageRecord)
-            else reject('Unable to create usage record.')
-        } catch (error) {
-            reject(error.message)
-        }
-    })
-}
-
-const saveSession = async (roomData) => {
-    const { customerId, apiKey, name, socketId, room, join, left } = roomData
-    const apiHash = crypto.createHash('md5').update(apiKey).digest('hex')
-    const roomHash = crypto.createHash('md5').update(room.id).digest('hex')
-
-    const peer = {
-        name: name,
-        socketId: socketId,
-        join: join,
-        left: left
-    };
-
-    let time = 0;
-
-    try {
-        await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(room.sessionId).update({
-            peers: Firestore.FieldValue.arrayUnion({ ...peer })
-        })
-    } catch (error) {
-        console.error(error)
-    }
-
-    try {
-        if (left && join) {
-            time += (left - join)
-        } else {
-            time += Date.now() - room.createdAt
-        }
-        const quantity = Math.ceil(time / 60000)
-        await chargeUser(customerId, quantity)
-    } catch (error) {
-        console.error(error)
-    }
-}
-
-const removeRoom = async (room) => {
-    const roomHash = crypto.createHash('md5').update(`${room}`).digest('hex')
-    try {
-        const res = await client.del(roomHash)
-        if (res === 1) {
-            console.log(`Redis Room Deleted : ${room}`)
-        } else {
-            console.log(`Unable to delete Redis Room : ${room}`)
-        }
-    } catch (error) {
-        console.error(error)
-    }
-}
-
-const saveToDB = async (data = {}, user) => {
-    // apiKey, customerId, secret, join, left, name, room: { id: roomId, apiHash, sessionId, createdAt, validTill }
-    const { room: { sessionId } } = user;
-
-    const sessionHash = crypto.createHash('md5').update(sessionId).digest('hex')
-    return await sessionsRef.doc(sessionHash).collection('stats').add({
-        ...data
-    })
-}

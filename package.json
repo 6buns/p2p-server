@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,13 +16,15 @@
     "@socket.io/redis-adapter": "^7.1.0",
     "dotenv": "^16.0.0",
     "express": "^4.17.2",
+    "jose": "^4.6.0",
     "redis": "^4.0.4",
     "socket.io": "^4.4.0",
-    "jose": "^4.6.0",
+    "socket.io-client": "^4.4.1",
     "stripe": "^8.209.0"
   },
   "devDependencies": {
     "cors": "^2.8.5",
+    "jest": "^27.5.1",
     "nodemon": "^2.0.15"
   }
 }
