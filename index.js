@@ -34,9 +34,7 @@ const httpsServer = createServer({
         readFileSync('./certs/SectigoRSADomainValidationSecureServerCA.crt'),
         readFileSync('./certs/USERTrustRSAAAACA.crt')
     ]
-}, app);
-
-httpsServer.listen(443)
+}, app).listen(443);
 
 global.io = new Server(httpsServer, {
     cors: {
