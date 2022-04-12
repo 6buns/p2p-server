@@ -77,14 +77,14 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
             break;
         }
         case 'process': {
-            if (type === 'PONG') {
-                try {
-                    const data = JSON.parse(atob(token));
-                    saveToDB(data, socket.data);
-                } catch (error) {
-                    console.error(error);
-                }
-            }
+            // if (type === 'PONG') {
+            //     try {
+            //         const data = JSON.parse(atob(token));
+            //         saveToDB(data, socket.data);
+            //     } catch (error) {
+            //         console.error(error);
+            //     }
+            // }
             break;
         }
         default:
