@@ -29,7 +29,11 @@ app.use(cors())
 
 const httpsServer = createServer({
     cert: readFileSync('./certs/6buns_com.crt'),
-    key: readFileSync('./certs/HSSL-61c6c62154a4b.key')
+    key: readFileSync('./certs/HSSL-61c6c62154a4b.key'),
+    ca: [
+        readFileSync('./certs/SectigoRSADomainValidationSecureServerCA.crt'),
+        readFileSync('./certs/USERTrustRSAAAACA.crt')
+    ]
 }, app);
 
 httpsServer.listen(443)
