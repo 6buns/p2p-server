@@ -3,19 +3,17 @@ const { generateSecret } = require('./src/firestore/generateSecret');
 
 const cors = require('cors');
 const express = require("express");
-const { Server } = require('socket.io');
+const socket = require('socket.io');
 require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: true } });
 
 // App setup
 const PORT = process.env.PORT || 8080;
 const app = express();
-const { readFileSync } = require('fs');
-const { createServer } = require('https');
 
-// const server = app.listen(PORT, function () {
-//     console.log(`Listening on port ${PORT}`);
-//     console.log(`http://localhost:${PORT}`);
-// });
+const server = app.listen(PORT, function () {
+    console.log(`Listening on port ${PORT}`);
+    console.log(`http://localhost:${PORT}`);
+});
 
 // Static files
 app.use(express.static("public"));
@@ -26,17 +24,7 @@ app.use(express.urlencoded({ extended: false }))
 app.use(cors())
 
 // Socket setup
-
-const httpsServer = createServer({
-    cert: readFileSync('./certs/6buns_com.crt'),
-    key: readFileSync('./certs/HSSL-61c6c62154a4b.key'),
-    ca: [
-        readFileSync('./certs/SectigoRSADomainValidationSecureServerCA.crt'),
-        readFileSync('./certs/USERTrustRSAAAACA.crt')
-    ]
-}, app).listen(443);
-
-global.io = new Server(httpsServer, {
+global.io = socket(server, {
     cors: {
         origin: ['*'],
     }
