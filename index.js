@@ -24,8 +24,8 @@ const server = app.listen(PORT, function () {
     console.log(`http://localhost:${PORT}`);
 });
 const db = new Firestore();
-exports.keyStoreRef = db.collection('keyStore')
-exports.sessionsRef = db.collection('sessions')
+const keyStoreRef = db.collection('keyStore')
+const sessionsRef = db.collection('sessions')
 
 // Static files
 app.use(express.static("public"));
@@ -54,7 +54,7 @@ const getTURNCredentials = (name, secret) => {
 }
 
 // Socket setup
-exports.io = socket(server, {
+const io = socket(server, {
     cors: {
         origin: ['*'],
     }
@@ -62,7 +62,7 @@ exports.io = socket(server, {
 
 const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
 const subClient = pubClient.duplicate();
-exports.client = pubClient.duplicate();
+const client = pubClient.duplicate();
 
 Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
@@ -144,3 +144,11 @@ app.post('/secret', async (req, res) => {
         })
     }
 })
+
+
+module.exports = {
+    keyStoreRef,
+    sessionsRef,
+    io,
+    client
+}
