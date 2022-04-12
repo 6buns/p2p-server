@@ -1,5 +1,5 @@
 
-export const chargeUser = (customerId, quantity) => {
+exports.chargeUser = (customerId, quantity) => {
     return new Promise(async (resolve, reject) => {
         try {
             const stripe = require('stripe')('sk_test_51KNlK1SCiwhjjSk0Wh83gIWl21JdXWfH9Gs9NjQr4sos7VTNRocKbvipbqO0LfpnB6NvattHJwLJaajmxNbyAKT900X1bNAggO');

@@ -1,9 +1,9 @@
-const crypto = require('crypto');
-import { keyStoreRef } from '../../index';
+const { randomBytes, createHash } = require('crypto');
+const { keyStoreRef } = require('../../index');
 
-export const generateSecret = async (apiKey) => {
-    const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
-    const secretKey = crypto.randomBytes(9).toString('hex').slice(0, 9);
+exports.generateSecret = async (apiKey) => {
+    const apiHash = createHash('md5').update(apiKey).digest('hex');
+    const secretKey = randomBytes(9).toString('hex').slice(0, 9);
 
     await keyStoreRef.doc(apiHash).set({
         secretKey,

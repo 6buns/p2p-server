@@ -1,9 +1,9 @@
-import { handleMessage } from './src/handleMessage.js';
-import { verifyAPIKey } from './src/firestore/verifyAPIKey';
-import { verifySecretKey } from './src/firestore/verifySecretKey';
-import { generateSecret } from './src/firestore/generateSecret';
-import { saveSession } from './src/firestore/saveSession';
-import { removeRoom } from './src/redis/removeRoom';
+const { handleMessage } = require('./src/handleMessage.js');
+const { verifyAPIKey } = require('./src/firestore/verifyAPIKey');
+const { verifySecretKey } = require('./src/firestore/verifySecretKey');
+const { generateSecret } = require('./src/firestore/generateSecret');
+const { saveSession } = require('./src/firestore/saveSession');
+const { removeRoom } = require('./src/redis/removeRoom');
 
 const cors = require('cors');
 const crypto = require('crypto');
@@ -24,8 +24,8 @@ const server = app.listen(PORT, function () {
     console.log(`http://localhost:${PORT}`);
 });
 const db = new Firestore();
-export const keyStoreRef = db.collection('keyStore')
-export const sessionsRef = db.collection('sessions')
+exports.keyStoreRef = db.collection('keyStore')
+exports.sessionsRef = db.collection('sessions')
 
 // Static files
 app.use(express.static("public"));
@@ -54,7 +54,7 @@ const getTURNCredentials = (name, secret) => {
 }
 
 // Socket setup
-export const io = socket(server, {
+exports.io = socket(server, {
     cors: {
         origin: ['*'],
     }
@@ -62,7 +62,7 @@ export const io = socket(server, {
 
 const pubClient = createClient({ url: `redis://:${process.env.REDIS_PASS}@${process.env.REDIS_URL}` });
 const subClient = pubClient.duplicate();
-export const client = pubClient.duplicate();
+exports.client = pubClient.duplicate();
 
 Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));

@@ -1,9 +1,9 @@
-const crypto = require('crypto');
-import { keyStoreRef } from '../../index';
+const { createHash } = require('crypto');
+const { keyStoreRef } = require('../../index');
 
-export const verifyAPIKey = async (apiKey) => {
+exports.verifyAPIKey = async (apiKey) => {
     return new Promise(async (resolve, reject) => {
-        const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
+        const apiHash = createHash('md5').update(apiKey).digest('hex');
         try {
             const doc = await keyStoreRef.doc(apiHash).get();
             if (doc.exists) {

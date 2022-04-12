@@ -1,18 +1,18 @@
-const crypto = require('crypto');
-import { client, sessionsRef } from '../../index';
+const { randomBytes, createHash } = require('crypto');
+const { client, sessionsRef } = require('../../index');
 
 
-export const createRoomInRedis = (roomId, apiKey) => {
+exports.createRoomInRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
         if (!roomId) {
-            roomId = crypto.randomBytes(5).toString('hex').slice(0, 5);
+            roomId = randomBytes(5).toString('hex').slice(0, 5);
         }
-        const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
+        const apiHash = createHash('md5').update(apiKey).digest('hex');
         const createdAt = Date.now();
         const validTill = Date.now() + 86400000;
-        const sessionId = crypto.randomBytes(20).toString('hex').slice(0, 20);
-        const sessionHash = crypto.createHash('md5').update(sessionId).digest('hex');
-        const roomKeyHash = crypto.createHash('md5').update(`${roomId}`).digest('hex');
+        const sessionId = randomBytes(20).toString('hex').slice(0, 20);
+        const sessionHash = createHash('md5').update(sessionId).digest('hex');
+        const roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
         let redis_response, record;
         const roomData = {
             id: roomId,

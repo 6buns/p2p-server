@@ -1,8 +1,8 @@
-import { io } from '../index';
-import { getRoomFromRedis } from "./redis/getRoomFromRedis";
-import { saveToDB } from "./firestore/saveToDB";
+const { io } =require ('../index');
+const { getRoomFromRedis } =require ("./redis/getRoomFromRedis");
+const { saveToDB } =require ("./firestore/saveToDB");
 
-export const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
+exports.handleMessage = async ({ type, from, to, room, token }, func, socket) => {
     let messageType = undefined;
 
     if ((from && to)) {

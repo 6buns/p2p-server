@@ -1,12 +1,12 @@
-const crypto = require('crypto');
+const { createHash } = require('crypto');
 const { FieldValue } = require("@google-cloud/firestore");
-import { keyStoreRef } from '../../index';
-import { chargeUser } from '../stripe/chargeUser'
+const { keyStoreRef } = require('../../index');
+const { chargeUser } = require('../stripe/chargeUser');
 
-export const saveSession = async (roomData) => {
+exports.saveSession = async (roomData) => {
     const { customerId, apiKey, name, socketId, room, join, left } = roomData;
-    const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');
-    const roomHash = crypto.createHash('md5').update(room.id).digest('hex');
+    const apiHash = createHash('md5').update(apiKey).digest('hex');
+    const roomHash = createHash('md5').update(room.id).digest('hex');
 
     const peer = {
         name: name,

@@ -1,6 +1,6 @@
-import { keyStoreRef } from '../../index';
+const { keyStoreRef } = require('../../index');
 
-export const verifySecretKey = async (secret) => {
+exports.verifySecretKey = async (secret) => {
     console.log(secret);
     try {
         const snapshot = await keyStoreRef.where('secretKey', '==', secret).get();

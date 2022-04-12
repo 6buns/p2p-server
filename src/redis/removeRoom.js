@@ -1,8 +1,8 @@
-const crypto = require('crypto');
-import { client } from '../../index';
+const { createHash } = require('crypto');
+const { client } = require('../../index');
 
-export const removeRoom = async (room) => {
-    const roomHash = crypto.createHash('md5').update(`${room}`).digest('hex');
+exports.removeRoom = async (room) => {
+    const roomHash = createHash('md5').update(`${room}`).digest('hex');
     try {
         const res = await client.del(roomHash);
         if (res === 1) {
