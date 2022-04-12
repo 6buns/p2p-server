@@ -24,6 +24,15 @@ app.use(express.urlencoded({ extended: false }))
 
 app.use(cors())
 
+// Socket setup
+const io = socket(server, {
+    cors: {
+        origin: ['*'],
+    }
+});
+
+require("./src/sockets")(io);
+
 app.get('/test', (req, res) => res.json({ 'yay': true }))
 
 /**
