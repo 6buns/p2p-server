@@ -1,3 +1,4 @@
+const { createAdapter } = require("@socket.io/redis-adapter");
 const { createClient } = require("redis");
 require('dotenv').config()
 
