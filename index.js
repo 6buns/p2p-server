@@ -33,7 +33,7 @@ const httpServer = createServer({
     key: readFileSync('./certs/HSSL-61c6c62154a4b.key')
 });
 
-const io = new Server(httpServer, {
+global.io = new Server(httpServer, {
     cors: {
         origin: ['*'],
     }
