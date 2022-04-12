@@ -31,7 +31,7 @@ global.io = socket(server, {
 });
 
 
-// require("./src/sockets");
+require("./src/sockets");
 
 app.get('/test', (req, res) => res.json({ 'yay': true }))
 
