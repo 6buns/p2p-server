@@ -12,10 +12,10 @@ const app = express();
 const { readFileSync } = require('fs');
 const { createServer } = require('https');
 
-const server = app.listen(PORT, function () {
-    console.log(`Listening on port ${PORT}`);
-    console.log(`http://localhost:${PORT}`);
-});
+// const server = app.listen(PORT, function () {
+//     console.log(`Listening on port ${PORT}`);
+//     console.log(`http://localhost:${PORT}`);
+// });
 
 // Static files
 app.use(express.static("public"));
@@ -27,12 +27,14 @@ app.use(cors())
 
 // Socket setup
 
-const httpServer = createServer({
+const httpsServer = createServer({
     cert: readFileSync('./certs/6buns_com.crt'),
     key: readFileSync('./certs/HSSL-61c6c62154a4b.key')
-});
+}, app);
 
-global.io = new Server(httpServer, {
+httpsServer.listen(443)
+
+global.io = new Server(httpsServer, {
     cors: {
         origin: ['*'],
     }
