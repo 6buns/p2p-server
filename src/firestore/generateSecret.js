@@ -1,5 +1,5 @@
 const { randomBytes, createHash } = require('crypto');
-const { keyStoreRef } = require('../../index');
+const { keyStoreRef } = require('.');
 
 exports.generateSecret = async (apiKey) => {
     const apiHash = createHash('md5').update(apiKey).digest('hex');

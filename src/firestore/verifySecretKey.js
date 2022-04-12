@@ -1,4 +1,4 @@
-const { keyStoreRef } = require('../../index');
+const { keyStoreRef } = require(".");
 
 exports.verifySecretKey = async (secret) => {
     console.log(secret);

@@ -1,5 +1,5 @@
 const { createHash } = require('crypto');
-const { client } = require('../../index');
+const { client } = require('.');
 const { createRoomInRedis } = require('./createRoomInRedis')
 
 exports.getRoomFromRedis = (roomId, apiKey) => {

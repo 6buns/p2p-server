@@ -1,5 +1,5 @@
 const { createHash } = require('crypto');
-const { client } = require('../../index');
+const { client } = require('.');
 
 exports.removeRoom = async (room) => {
     const roomHash = createHash('md5').update(`${room}`).digest('hex');

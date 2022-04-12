@@ -1,7 +1,7 @@
 const { createHash } = require('crypto');
 const { FieldValue } = require("@google-cloud/firestore");
-const { keyStoreRef } = require('../../index');
 const { chargeUser } = require('../stripe/chargeUser');
+const { keyStoreRef } = require('.');
 
 exports.saveSession = async (roomData) => {
     const { customerId, apiKey, name, socketId, room, join, left } = roomData;

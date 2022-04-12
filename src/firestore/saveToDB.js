@@ -1,5 +1,5 @@
 const { createHash } = require('crypto');
-const { sessionsRef } = require('../../index');
+const { sessionsRef } = require('.');
 
 
 exports.saveToDB = async (data = {}, user) => {

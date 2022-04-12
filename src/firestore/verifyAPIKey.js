@@ -1,5 +1,5 @@
 const { createHash } = require('crypto');
-const { keyStoreRef } = require('../../index');
+const { keyStoreRef } = require('.');
 
 exports.verifyAPIKey = async (apiKey) => {
     return new Promise(async (resolve, reject) => {

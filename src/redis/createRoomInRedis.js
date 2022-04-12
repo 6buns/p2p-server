@@ -1,5 +1,6 @@
 const { randomBytes, createHash } = require('crypto');
-const { client, sessionsRef } = require('../../index');
+const { client } = require('.');
+const { sessionsRef } = require('../firestore');
 
 
 exports.createRoomInRedis = (roomId, apiKey) => {
