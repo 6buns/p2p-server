@@ -9,7 +9,8 @@ require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: tru
 // App setup
 const PORT = process.env.PORT || 8080;
 const app = express();
-const { readFileSync } = require('fs')
+const { readFileSync } = require('fs');
+const { createServer } = require('https');
 
 const server = app.listen(PORT, function () {
     console.log(`Listening on port ${PORT}`);
