@@ -39,7 +39,7 @@ global.io = new Server(httpServer, {
 });
 
 
-require("./src/sockets")(io);
+require("./src/sockets");
 
 app.get('/test', (req, res) => res.json({ 'yay': true }))
 
