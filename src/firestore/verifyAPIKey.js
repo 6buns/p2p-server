@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-import { keyStoreRef } from './index';
+import { keyStoreRef } from '../../index';
 
 export const verifyAPIKey = async (apiKey) => {
     return new Promise(async (resolve, reject) => {

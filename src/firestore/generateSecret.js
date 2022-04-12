@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-import { keyStoreRef } from './index';
+import { keyStoreRef } from '../../index';
 
 export const generateSecret = async (apiKey) => {
     const apiHash = crypto.createHash('md5').update(apiKey).digest('hex');

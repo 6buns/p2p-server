@@ -1,6 +1,6 @@
 import { io } from '../index';
-import { getRoomFromRedis } from "../getRoomFromRedis";
-import { saveToDB } from "../saveToDB";
+import { getRoomFromRedis } from "./redis/getRoomFromRedis";
+import { saveToDB } from "./firestore/saveToDB";
 
 export const handleMessage = async ({ type, from, to, room, token }, func, socket) => {
     let messageType = undefined;

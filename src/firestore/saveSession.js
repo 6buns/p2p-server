@@ -1,6 +1,7 @@
 const crypto = require('crypto');
-const { Firestore } = require("@google-cloud/firestore");
-import { keyStoreRef, chargeUser } from './index';
+const { FieldValue } = require("@google-cloud/firestore");
+import { keyStoreRef } from '../../index';
+import { chargeUser } from '../stripe/chargeUser'
 
 export const saveSession = async (roomData) => {
     const { customerId, apiKey, name, socketId, room, join, left } = roomData;
@@ -18,7 +19,7 @@ export const saveSession = async (roomData) => {
 
     try {
         await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(room.sessionId).update({
-            peers: Firestore.FieldValue.arrayUnion({ ...peer })
+            peers: FieldValue.arrayUnion({ ...peer })
         });
     } catch (error) {
         console.error(error);

@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-import { sessionsRef } from './index';
+import { sessionsRef } from '../../index';
 
 
 export const saveToDB = async (data = {}, user) => {

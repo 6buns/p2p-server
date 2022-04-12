@@ -1,6 +1,6 @@
 const crypto = require('crypto');
-import { client, createRoomInRedis } from './index';
-
+import { client } from '../../index';
+import { createRoomInRedis } from './createRoomInRedis'
 
 export const getRoomFromRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {

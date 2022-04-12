@@ -1,9 +1,9 @@
 import { handleMessage } from './src/handleMessage.js';
-import { verifyAPIKey } from './verifyAPIKey';
+import { verifyAPIKey } from './src/firestore/verifyAPIKey';
 import { verifySecretKey } from './src/firestore/verifySecretKey';
-import { generateSecret } from './generateSecret';
-import { saveSession } from './saveSession';
-import { removeRoom } from './removeRoom';
+import { generateSecret } from './src/firestore/generateSecret';
+import { saveSession } from './src/firestore/saveSession';
+import { removeRoom } from './src/redis/removeRoom';
 
 const cors = require('cors');
 const crypto = require('crypto');

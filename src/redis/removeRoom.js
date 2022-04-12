@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-import { client } from './index';
+import { client } from '../../index';
 
 export const removeRoom = async (room) => {
     const roomHash = crypto.createHash('md5').update(`${room}`).digest('hex');
