@@ -1,7 +1,7 @@
-export const crypt = (data) => {
+exports.crypt = (data) => {
     return btoa(JSON.stringify({ ...data }))
 }
 
-export const decrypt = (token) => {
+exports.decrypt = (token) => {
     return JSON.parse(atob(token))
 }
