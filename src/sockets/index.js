@@ -36,7 +36,7 @@ io.on("connection", function (socket) {
         console.log('Socket Left : ', socket.id, socket.adapter.sids)
         socket.data.left = Date.now()
         socket.data.socketId = socket.id
-        saveSession(socket.data)
+        saveSession({ ...socket.data })
     })
 });
 

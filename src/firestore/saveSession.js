@@ -13,7 +13,7 @@ exports.saveSession = async (roomData) => {
         return
     }
     const peer = {
-        name: name,
+        name: name || '',
         socketId: socketId,
         join: join,
         left: left
