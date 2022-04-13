@@ -1,7 +1,6 @@
 
 const { getRoomFromRedis } = require("./redis/getRoomFromRedis");
 const { saveToDB } = require("./firestore/saveToDB");
-const { io } = require("./sockets");
 const { decrypt } = require("./helper");
 
 exports.handleMessage = async ({ type, from, to, room, token }, func, socket) => {
