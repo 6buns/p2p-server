@@ -2,6 +2,7 @@
 const { getRoomFromRedis } = require("./redis/getRoomFromRedis");
 const { saveToDB } = require("./firestore/saveToDB");
 const { io } = require("./sockets");
+const { decrypt } = require("./helper");
 
 exports.handleMessage = async ({ type, from, to, room, token }, func, socket) => {
     let messageType = undefined;
@@ -66,8 +67,9 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                             });
                         }
                     }
+                    const { name } = decrypt(token)
                     socket.data.join = Date.now();
-                    socket.data.name = dataJson.name;
+                    socket.data.name = name;
                     console.table({ ...socket.data });
                 }
             } catch (error) {

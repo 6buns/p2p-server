@@ -22,6 +22,7 @@ exports.saveSession = async (roomData) => {
     let time = 0;
 
     try {
+        console.log(`PEER : ${name}`)
         await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(room.sessionId).update({
             peers: FieldValue.arrayUnion({ ...peer })
         });
