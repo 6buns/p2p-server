@@ -3,7 +3,8 @@ const { FieldValue } = require("@google-cloud/firestore");
 const { chargeUser } = require('../stripe/chargeUser');
 const { keyStoreRef } = require('.');
 
-exports.saveSession = async ({ customerId, name, socketId, room: { id, apiHash, sessionId, createdAt }, join, left }) => {
+exports.saveSession = async ({ customerId, name, socketId, room, join, left }) => {
+    const { id, apiHash, sessionId, createdAt } = room;
     const roomHash = createHash('md5').update(id).digest('hex');
 
     if (!sessionId) {
