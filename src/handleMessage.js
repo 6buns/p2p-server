@@ -1,6 +1,6 @@
 
-const { getRoomFromRedis } =require ("./redis/getRoomFromRedis");
-const { saveToDB } =require ("./firestore/saveToDB");
+const { getRoomFromRedis } = require("./redis/getRoomFromRedis");
+const { saveToDB } = require("./firestore/saveToDB");
 const { io } = require("./sockets");
 
 exports.handleMessage = async ({ type, from, to, room, token }, func, socket) => {
@@ -47,6 +47,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
         case 'callback': {
             // charge here room is new.
             let room;
+            console.log(`SOCKET DATA :: CUSTOMER ID : ${socket.data.customerId} :: API KEY : ${socket.data.apiKey} :: SECRET : ${socket.data.secret} `)
             try {
                 const dataJson = await getRoomFromRedis(room, socket.data.apiKey);
                 if (!dataJson) {
