@@ -8,6 +8,10 @@ exports.saveSession = async (roomData) => {
     const apiHash = createHash('md5').update(apiKey).digest('hex');
     const roomHash = createHash('md5').update(room.id).digest('hex');
 
+    if (!room.sessionId) {
+        console.log(`No Session ID present`)
+        return
+    }
     const peer = {
         name: name,
         socketId: socketId,
