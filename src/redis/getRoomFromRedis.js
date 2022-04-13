@@ -2,7 +2,7 @@ const { createHash } = require('crypto');
 const { client } = require('.');
 const { createRoomInRedis } = require('./createRoomInRedis')
 
-exports.getRoomFromRedis = (roomId, apiKey, { name }) => {
+exports.getRoomFromRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
         const roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
         let roomData = {};
@@ -11,7 +11,7 @@ exports.getRoomFromRedis = (roomId, apiKey, { name }) => {
             roomData = JSON.parse(await client.get(roomKeyHash));
             if (!roomData) {
                 // no room data
-                ({ roomData } = await createRoomInRedis(roomId, apiKey, { name }));
+                ({ roomData } = await createRoomInRedis(roomId, apiKey));
             }
             console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
             resolve({ ...roomData });

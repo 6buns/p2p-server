@@ -50,8 +50,8 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
             let room, id, apiHash, name, sessionId, createdAt, validTill;
             ({ name } = decrypt(token))
             try {
-                ({ id, apiHash, name, sessionId, createdAt, validTill } = await getRoomFromRedis(room, socket.data.apiKey, { name }));
-                if (id && apiHash && name && sessionId) {
+                ({ id, apiHash, sessionId, createdAt, validTill } = await getRoomFromRedis(room, socket.data.apiKey));
+                if (id && apiHash && sessionId) {
                     func({
                         error: 'Room not present'
                     });
@@ -69,7 +69,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                         }
                     }
                     socket.data.join = Date.now();
-                    socket.data.name = name;
+                    socket.data.name = name
                 }
             } catch (error) {
                 error ? func({ error }) : func({ error: 'Room not present' });

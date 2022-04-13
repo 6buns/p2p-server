@@ -3,7 +3,7 @@ const { client } = require('.');
 const { sessionsRef } = require('../firestore');
 
 
-exports.createRoomInRedis = (roomId, apiKey, { name }) => {
+exports.createRoomInRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
         if (!roomId || roomId == '' || roomId == undefined) {
             roomId = randomBytes(5).toString('hex').slice(0, 5);
@@ -18,7 +18,6 @@ exports.createRoomInRedis = (roomId, apiKey, { name }) => {
         const roomData = {
             id: roomId,
             apiHash,
-            name,
             sessionId,
             createdAt,
             validTill,
