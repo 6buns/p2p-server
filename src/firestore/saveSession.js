@@ -4,7 +4,6 @@ const { chargeUser } = require('../stripe/chargeUser');
 const { keyStoreRef } = require('.');
 
 exports.saveSession = async ({ customerId, apiKey, name, socketId, room: { id, apiHash, name, sessionId, createdAt, validTill }, join, left }) => {
-    const apiHash = createHash('md5').update(apiKey).digest('hex');
     const roomHash = createHash('md5').update(id).digest('hex');
 
     if (!sessionId) {
