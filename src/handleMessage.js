@@ -55,6 +55,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                 socket.data.room = roomData;
                 socket.join(room);
                 const sockets = await io.of("/").in(room).fetchSockets();
+                console.log(`Sockets : ${sockets.map(e => e.id)}`)
                 func({
                     res: sockets.map(e => e.id)
                 });
