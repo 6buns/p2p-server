@@ -5,7 +5,7 @@ const { sessionsRef } = require('../firestore');
 
 exports.createRoomInRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
-        if (!roomId) {
+        if (!roomId || roomId == '' || roomId == undefined) {
             roomId = randomBytes(5).toString('hex').slice(0, 5);
         }
         const apiHash = createHash('md5').update(apiKey).digest('hex');
