@@ -47,18 +47,18 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
         }
         case 'callback': {
             // charge here room is new.
-            let room;
-            const { name } = decrypt(token)
+            let room, id, apiHash, name, sessionId, createdAt, validTill;
+            ({ name } = decrypt(token))
             try {
-                const dataJson = await getRoomFromRedis(room, socket.data.apiKey, { name });
-                if (!dataJson) {
+                ({ id, apiHash, name, sessionId, createdAt, validTill } = await getRoomFromRedis(room, socket.data.apiKey, { name }));
+                if (id && apiHash && name && sessionId) {
                     func({
                         error: 'Room not present'
                     });
                     socket.disconnect(true);
                 } else {
-                    room = dataJson.id;
-                    socket.data.room = { ...dataJson };
+                    room = id;
+                    socket.data.room = { id, apiHash, sessionId, createdAt, validTill };
                     socket.join(room);
 
                     for (const [roomName, id] of io.of("/").adapter.rooms) {
@@ -69,8 +69,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                         }
                     }
                     socket.data.join = Date.now();
-                    socket.data.name = dataJson.name;
-                    console.table({ ...socket.data });
+                    socket.data.name = name;
                 }
             } catch (error) {
                 error ? func({ error }) : func({ error: 'Room not present' });
