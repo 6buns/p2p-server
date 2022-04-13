@@ -7,13 +7,14 @@ exports.getRoomFromRedis = (roomId, apiKey) => {
         const roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
         let data = {};
         try {
-            console.log(await client.ping());
+            console.log(`GET ROOM : ${roomId} :: API KEY : ${apiKey}`);
             data = JSON.parse(await client.get(roomKeyHash));
             if (!data) {
+                console.log(`CREATE ROOM : ${roomId} :: API KEY : ${apiKey}`);
                 // no room data
                 data = await createRoomInRedis(roomId, apiKey);
             }
-            console.log(`Cached room ${data.roomId} from redis expiring in ${data.validTill}.`, data);
+            console.log(`ROOM : ${data.roomId} :: VALID TILL : ${data.validTill}`, data);
             resolve({ ...data });
         } catch (error) {
             reject(error.message);
