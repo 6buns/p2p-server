@@ -51,26 +51,26 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
             ({ name } = decrypt(token))
             try {
                 ({ id, apiHash, sessionId, createdAt, validTill } = await getRoomFromRedis(room, socket.data.apiKey));
-                if (id && apiHash && sessionId) {
+                if (!(id && apiHash && sessionId)) {
                     func({
-                        error: 'Room not present'
+                        error: 'Room Keys not present'
                     });
                     socket.disconnect(true);
-                } else {
-                    room = id;
-                    socket.data.room = { id, apiHash, sessionId, createdAt, validTill };
-                    socket.join(room);
-
-                    for (const [roomName, id] of io.of("/").adapter.rooms) {
-                        if (roomName === room && id !== socket.id) {
-                            func({
-                                res: [...id]
-                            });
-                        }
-                    }
-                    socket.data.join = Date.now();
-                    socket.data.name = name
+                    break;
                 }
+                room = id;
+                socket.data.room = { id, apiHash, sessionId, createdAt, validTill };
+                socket.join(room);
+
+                for (const [roomName, id] of io.of("/").adapter.rooms) {
+                    if (roomName === room && id !== socket.id) {
+                        func({
+                            res: [...id]
+                        });
+                    }
+                }
+                socket.data.join = Date.now();
+                socket.data.name = name
             } catch (error) {
                 error ? func({ error }) : func({ error: 'Room not present' });
                 socket.disconnect(true);
