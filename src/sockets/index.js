@@ -16,9 +16,7 @@ io.use((socket, next) => {
     //     // }
     // }
     verifySecretKey(socket.handshake.auth.key).then(({ apiKey, customerId, secretKey }) => {
-        socket.data.customerId = customerId
-        socket.data.apiKey = apiKey
-        socket.data.secret = secretKey
+        socket.data = { ...socket?.data, apiKey, customerId, secretKey };
         console.log(`SOCKET DATA :: CUSTOMER ID : ${socket.data.customerId} :: API KEY : ${socket.data.apiKey} :: SECRET : ${socket.data.secret} `)
         next()
     }).catch((err) => next(err))
