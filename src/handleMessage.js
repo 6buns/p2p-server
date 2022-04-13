@@ -54,14 +54,10 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                 room = roomData.id;
                 socket.data.room = roomData;
                 socket.join(room);
-
-                for (const [roomName, id] of io.of("/").adapter.rooms) {
-                    if (roomName === room && id !== socket.id) {
-                        func({
-                            res: [...id]
-                        });
-                    }
-                }
+                const sockets = await io.of("/").in(room).fetchSockets();
+                func({
+                    res: sockets.map(e => e.id)
+                });
                 socket.data.join = Date.now();
                 socket.data.name = name
             } catch (error) {
