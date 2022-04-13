@@ -5,17 +5,16 @@ const { createRoomInRedis } = require('./createRoomInRedis')
 exports.getRoomFromRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
         const roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
-        let data = {};
+        let roomData = {};
         try {
             console.log(`GET ROOM : ${roomId} :: API KEY : ${apiKey}`);
-            data = JSON.parse(await client.get(roomKeyHash));
-            if (!data) {
-                console.log(`CREATE ROOM : ${roomId} :: API KEY : ${apiKey}`);
+            roomData = JSON.parse(await client.get(roomKeyHash));
+            if (!roomData) {
                 // no room data
-                data = await createRoomInRedis(roomId, apiKey);
+                ({ roomData } = await createRoomInRedis(roomId, apiKey));
             }
-            console.log(`ROOM : ${data.roomId} :: VALID TILL : ${data.validTill}`, data);
-            resolve({ ...data });
+            console.log(`ROOM : ${roomData.roomId} :: VALID TILL : ${roomData.validTill}`, roomData);
+            resolve({ ...roomData });
         } catch (error) {
             reject(error.message);
         }

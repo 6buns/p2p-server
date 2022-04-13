@@ -31,14 +31,14 @@ exports.createRoomInRedis = (roomId, apiKey) => {
         }
 
         try {
-            console.log(`Created room ${roomId} in redis expiring in ${validTill}.`);
+            console.log(`ROOM CREATED : ${roomId} :: VALIDITY : ${validTill}`);
             const firestore_response = await sessionsRef.doc(sessionHash).set({
                 ...roomData,
                 peers: []
             });
+            resolve({ redis_response, firestore_response, roomData });
         } catch (error) {
             reject(error);
         }
-        resolve({ redis_response, firestore_response, roomData });
     });
 };
