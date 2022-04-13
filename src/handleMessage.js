@@ -48,8 +48,9 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
         case 'callback': {
             // charge here room is new.
             let room;
+            const { name } = decrypt(token)
             try {
-                const dataJson = await getRoomFromRedis(room, socket.data.apiKey);
+                const dataJson = await getRoomFromRedis(room, socket.data.apiKey, { name });
                 if (!dataJson) {
                     func({
                         error: 'Room not present'
@@ -67,9 +68,8 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                             });
                         }
                     }
-                    const { name } = decrypt(token)
                     socket.data.join = Date.now();
-                    socket.data.name = name;
+                    socket.data.name = dataJson.name;
                     console.table({ ...socket.data });
                 }
             } catch (error) {
