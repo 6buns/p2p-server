@@ -3,12 +3,11 @@ const { FieldValue } = require("@google-cloud/firestore");
 const { chargeUser } = require('../stripe/chargeUser');
 const { keyStoreRef } = require('.');
 
-exports.saveSession = async (roomData) => {
-    const { customerId, apiKey, name, socketId, room, join, left } = roomData;
+exports.saveSession = async ({ customerId, apiKey, name, socketId, room: { id, apiHash, name, sessionId, createdAt, validTill }, join, left }) => {
     const apiHash = createHash('md5').update(apiKey).digest('hex');
-    const roomHash = createHash('md5').update(room.id).digest('hex');
+    const roomHash = createHash('md5').update(id).digest('hex');
 
-    if (!room.sessionId) {
+    if (!sessionId) {
         console.log(`No Session ID present`)
         return
     }
@@ -23,7 +22,7 @@ exports.saveSession = async (roomData) => {
 
     try {
         console.log(`PEER : ${name}`)
-        await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(room.sessionId).update({
+        await keyStoreRef.doc(apiHash).collection('rooms').doc(roomHash).collection('sessions').doc(sessionId).update({
             peers: FieldValue.arrayUnion({ ...peer })
         });
     } catch (error) {
@@ -34,7 +33,7 @@ exports.saveSession = async (roomData) => {
         if (left && join) {
             time += (left - join);
         } else {
-            time += Date.now() - room.createdAt;
+            time += Date.now() - createdAt;
         }
         const quantity = Math.ceil(time / 60000);
         await chargeUser(customerId, quantity);
