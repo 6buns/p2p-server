@@ -47,19 +47,12 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
         }
         case 'callback': {
             // charge here room is new.
-            let room, id, apiHash, name, sessionId, createdAt, validTill;
+            let room, name;
             ({ name } = decrypt(token))
             try {
-                ({ id, apiHash, sessionId, createdAt, validTill } = await getRoomFromRedis(room, socket.data.apiKey));
-                if (!(id && apiHash && sessionId)) {
-                    func({
-                        error: 'Room Keys not present'
-                    });
-                    socket.disconnect(true);
-                    break;
-                }
-                room = id;
-                socket.data.room = { id, apiHash, sessionId, createdAt, validTill };
+                const roomData = await getRoomFromRedis(room, socket.data.apiKey);
+                room = roomData.id;
+                socket.data.room = roomData;
                 socket.join(room);
 
                 for (const [roomName, id] of io.of("/").adapter.rooms) {
