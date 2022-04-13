@@ -13,7 +13,6 @@ exports.getRoomFromRedis = (roomId, apiKey) => {
                 // no room data
                 ({ roomData } = await createRoomInRedis(roomId, apiKey));
             }
-            console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
             resolve({ ...roomData });
         } catch (error) {
             reject(error.message);

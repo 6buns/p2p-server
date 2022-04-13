@@ -50,6 +50,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
             const { name } = decrypt(token)
             try {
                 const roomData = await getRoomFromRedis(room, socket.data.apiKey);
+                console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
                 room = roomData.id;
                 socket.data.room = roomData;
                 socket.join(room);
