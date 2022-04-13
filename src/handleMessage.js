@@ -64,6 +64,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                 socket.data.join = Date.now();
                 socket.data.name = name
             } catch (error) {
+                console.log(error)
                 error ? func({ error }) : func({ error: 'Room not present' });
                 socket.disconnect(true);
             }
