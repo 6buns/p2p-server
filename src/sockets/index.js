@@ -10,11 +10,12 @@ const { removeRoom } = require("../redis/removeRoom");
  */
 
 io.use((socket, next) => {
-    // if (socket.handshake.auth.key === 'DEMO') {
-    //     next(socket)
-    //     // if (!(socket.io.engine.hostname.match('6buns.com/demo'))) {
-    //     // }
-    // }
+    if (socket.handshake.auth.key === 'DEMO') {
+        console.log(`Host : ${host} :: URL : ${url} :: Address : ${address}`)
+        if (!(socket.handshake.headers.host.match('6buns.com'))) {
+            next(socket)
+        }
+    }
     verifySecretKey(socket.handshake.auth.key).then(({ apiKey, customerId, secretKey }) => {
         socket.data = { ...socket?.data, apiKey, customerId, secretKey };
         console.log(`SOCKET DATA :: CUSTOMER ID : ${socket.data.customerId} :: API KEY : ${socket.data.apiKey} :: SECRET : ${socket.data.secret} `)
