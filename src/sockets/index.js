@@ -10,8 +10,9 @@ const { removeRoom } = require("../redis/removeRoom");
  */
 
 io.use((socket, next) => {
-    console.log(`Host : ${socket.handshake.headers.host} :: URL : ${socket.handshake.headers.url} :: Address : ${socket.handshake.headers.address}`)
+    console.log({ ...socket.handshake })
     if (socket.handshake.auth.key === 'DEMO') {
+        console.log(`Host : ${socket.handshake.headers.host} :: URL : ${socket.handshake.headers.url} :: Address : ${socket.handshake.headers.address}`)
         if (!(socket.handshake.headers.host.match('6buns.com'))) {
             next(socket)
         }
