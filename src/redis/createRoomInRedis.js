@@ -2,7 +2,6 @@ const { randomBytes, createHash } = require('crypto');
 const { client } = require('.');
 const { sessionsRef } = require('../firestore');
 
-
 exports.createRoomInRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
         if (!roomId || roomId == '' || roomId == undefined) {
