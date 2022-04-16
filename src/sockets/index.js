@@ -10,11 +10,18 @@ const { removeRoom } = require("../redis/removeRoom");
  */
 
 io.use((socket, next) => {
-    console.log({ ...socket.handshake })
     if (socket.handshake.auth.key === 'DEMO') {
-        console.log(`Host : ${socket.handshake.headers.host} :: URL : ${socket.handshake.headers.url} :: Address : ${socket.handshake.headers.address}`)
-        if (!(socket.handshake.headers.host.match('6buns.com'))) {
+        console.log(`Host : ${socket.handshake.headers.host} :: ORIGIN : ${socket.handshake.headers.origin} :: Address : ${socket.handshake.headers['x-forwarded-for']}`)
+        if ((socket.handshake.headers.host === 'p2p.6buns.com') && ['http://localhost:5555', 'https://6buns.com'].includes(socket.handshake.headers.origin)) {
+            socket.data = {
+                ...socket?.data,
+                apiKey: 'DEMO',
+                customerId: 'DEMO',
+                secretKey: 'DEMO'
+            }
             next(socket)
+        } else {
+            next(new Error('Unauthorised Access'))
         }
     }
     else {

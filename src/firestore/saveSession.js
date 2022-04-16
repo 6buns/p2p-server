@@ -7,6 +7,8 @@ exports.saveSession = async ({ customerId, name, socketId, room, join, left }) =
     const { id, apiHash, sessionId, createdAt } = room;
     const roomHash = createHash('md5').update(id).digest('hex');
 
+    if (customerId === 'DEMO') return
+
     if (!sessionId) {
         console.log(`No Session ID present`)
         return
