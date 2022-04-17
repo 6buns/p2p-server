@@ -1,6 +1,5 @@
 const { randomBytes, createHash } = require('crypto');
 const { client } = require('.');
-const { sessionsRef } = require('../firestore');
 
 exports.createRoomInRedis = (roomId, apiKey) => {
     return new Promise(async (resolve, reject) => {
@@ -30,7 +29,7 @@ exports.createRoomInRedis = (roomId, apiKey) => {
 
         try {
             console.log(`ROOM CREATED : ${roomId} :: VALIDITY : ${validTill}`);
-            resolve({ redis_response, firestore_response, roomData });
+            resolve({ redis_response, roomData });
         } catch (error) {
             reject(error);
         }
