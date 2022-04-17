@@ -11,7 +11,6 @@ exports.createRoomInRedis = (roomId, apiKey) => {
         const createdAt = Date.now();
         const validTill = Date.now() + 86400000;
         const sessionId = randomBytes(20).toString('hex').slice(0, 20);
-        // const sessionHash = createHash('md5').update(sessionId).digest('hex');
         const roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
         let redis_response, record;
         const roomData = {
@@ -31,10 +30,6 @@ exports.createRoomInRedis = (roomId, apiKey) => {
 
         try {
             console.log(`ROOM CREATED : ${roomId} :: VALIDITY : ${validTill}`);
-            // const firestore_response = await sessionsRef.doc(sessionHash).set({
-            //     ...roomData,
-            //     peers: []
-            // });
             resolve({ redis_response, firestore_response, roomData });
         } catch (error) {
             reject(error);

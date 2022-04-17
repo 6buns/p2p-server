@@ -19,7 +19,7 @@ io.use((socket, next) => {
                 customerId: 'DEMO',
                 secretKey: 'DEMO'
             }
-            next(socket)
+            next()
         } else {
             next(new Error('Unauthorised Access'))
         }
