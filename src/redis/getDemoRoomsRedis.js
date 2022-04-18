@@ -8,7 +8,7 @@ exports.getDemoRoomsRedis = (roomId) => {
             const clients = await client.LLEN('demo')
             console.log(`DEMO ROOMS : ${clients}`)
             if (clients > 2) {
-                roomData = JSON.parse(JSON.stringify(await client.LPOP('demo')))
+                roomData = JSON.parse(await client.LPOP('demo'))
                 console.log(`DEMO ROOM POPPED : `, roomData)
                 resolve(roomData)
             } else {
