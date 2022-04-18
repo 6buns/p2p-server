@@ -6,7 +6,7 @@ exports.getDemoRoomsRedis = (roomId) => {
         try {
             const clients = await client.LLEN('demo_rooms')
             if (clients > 2) {
-                resolve({ roomData: await client.LPOP('demo_rooms') })
+                resolve({ ...await client.LPOP('demo_rooms') })
             } else {
                 try {
                     if (!roomId) roomId = `demo_${randomBytes(5).toString('hex').slice(0, 5)}`
