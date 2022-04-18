@@ -63,7 +63,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                 console.log(`Sockets : ${sockets.map(e => e.id)}`)
                 func({
                     res: sockets.map(e => e.id),
-                    room: room
+                    room: roomData.id
                 });
                 socket.data.join = Date.now();
                 socket.data.name = name
