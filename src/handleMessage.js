@@ -1,5 +1,6 @@
 
 const { getRoomFromRedis } = require("./redis/getRoomFromRedis");
+const { getDemoRoomsRedis } = require("./redis/getDemoRoomsRedis")
 const { saveToDB } = require("./firestore/saveToDB");
 const { decrypt } = require("./helper");
 
@@ -50,7 +51,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
             let roomData = {};
             try {
                 if (room.contains('demo')) {
-                    roomData = await getDemoRoomsFromRedis(room);
+                    roomData = await getDemoRoomsRedis(room);
                 } else {
                     roomData = await getRoomFromRedis(room, socket.data.apiKey);
                 }
@@ -61,7 +62,8 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                 const sockets = await io.of("/").in(room).fetchSockets();
                 console.log(`Sockets : ${sockets.map(e => e.id)}`)
                 func({
-                    res: sockets.map(e => e.id)
+                    res: sockets.map(e => e.id),
+                    room: room
                 });
                 socket.data.join = Date.now();
                 socket.data.name = name
