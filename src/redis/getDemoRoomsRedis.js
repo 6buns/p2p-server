@@ -9,7 +9,7 @@ exports.getDemoRoomsRedis = (roomId) => {
             console.log(`DEMO ROOMS : ${clients}`)
             if (clients > 2) {
                 roomData = await client.LPOP('demo')
-                console.log(`DEMO ROOM POPPED : `, { ...roomData })
+                console.log(`DEMO ROOM POPPED : `, roomData)
                 resolve({ ...roomData })
             } else {
                 try {
