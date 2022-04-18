@@ -3,13 +3,14 @@ const { client } = require('.');
 
 exports.getDemoRoomsRedis = (roomId) => {
     return new Promise(async (resolve, reject) => {
+        let roomData, roomKeyHash, createdAt;
         try {
             const clients = await client.LLEN('demo')
             console.log(`DEMO ROOMS : ${clients}`)
             if (clients > 2) {
-                const client = await client.LPOP('demo')
-                console.log(`DEMO ROOM POPPED : `, { ...client })
-                resolve({ ...client })
+                roomData = await client.LPOP('demo')
+                console.log(`DEMO ROOM POPPED : `, { ...roomData })
+                resolve({ ...roomData })
             } else {
                 try {
                     createdAt = Date.now();
