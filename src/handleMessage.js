@@ -50,7 +50,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
             const { name } = decrypt(token)
             let roomData = {};
             try {
-                if (!room || room.contains('demo')) {
+                if (socket.data.apiKey === 'DEMO') {
                     roomData = await getDemoRoomsRedis(room);
                 } else {
                     roomData = await getRoomFromRedis(room, socket.data.apiKey);
