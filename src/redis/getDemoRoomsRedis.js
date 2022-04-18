@@ -5,8 +5,11 @@ exports.getDemoRoomsRedis = (roomId) => {
     return new Promise(async (resolve, reject) => {
         try {
             const clients = await client.LLEN('demo_rooms')
+            console.log(`DEMO ROOMS : ${clients}`)
             if (clients > 2) {
-                resolve({ ...await client.LPOP('demo_rooms') })
+                const client = await client.LPOP('demo_rooms')
+                console.log(`DEMO ROOM POPPED : `, { ...client })
+                resolve({ ...client })
             } else {
                 try {
                     if (!roomId) roomId = `demo_${randomBytes(5).toString('hex').slice(0, 5)}`
@@ -20,6 +23,7 @@ exports.getDemoRoomsRedis = (roomId) => {
                         validTill: createdAt + 86400000,
                     };
                     await client.RPUSH('demo_rooms', JSON.stringify({ ...roomData }))
+                    console.log(`DEMO ROOM PUSHED`, { ...roomData })
                 } catch (error) {
                     reject(error)
                 }
