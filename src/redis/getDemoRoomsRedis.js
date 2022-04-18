@@ -12,13 +12,10 @@ exports.getDemoRoomsRedis = (roomId) => {
                 resolve({ ...client })
             } else {
                 try {
-                    if (!roomId || roomId === {} || roomId === '') {
-                        roomId = `demo_${randomBytes(5).toString('hex').slice(0, 5)}`;
-                    }
                     createdAt = Date.now();
                     roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
                     roomData = {
-                        id: roomId,
+                        id: `demo_${randomBytes(5).toString('hex').slice(0, 5)}`,
                         apiHash: '',
                         sessionId: randomBytes(20).toString('hex').slice(0, 20),
                         createdAt,
