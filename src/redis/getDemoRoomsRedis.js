@@ -1,4 +1,4 @@
-const { createHash } = require('crypto');
+const { createHash, randomBytes } = require('crypto');
 const { client } = require('.');
 
 exports.getDemoRoomsRedis = (roomId) => {
