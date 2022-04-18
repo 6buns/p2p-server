@@ -10,7 +10,7 @@ exports.getDemoRoomsRedis = (roomId) => {
             if (clients > 2) {
                 roomData = await client.LPOP('demo')
                 console.log(`DEMO ROOM POPPED : `, roomData)
-                resolve({ ...roomData })
+                resolve(roomData)
             } else {
                 try {
                     createdAt = Date.now();
