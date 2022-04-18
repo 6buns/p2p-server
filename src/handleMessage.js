@@ -47,8 +47,13 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
         case 'callback': {
             // charge here room is new.
             const { name } = decrypt(token)
+            let roomData = {};
             try {
-                const roomData = await getRoomFromRedis(room, socket.data.apiKey);
+                if (room.contains('demo')) {
+                    roomData = await getDemoRoomsFromRedis(room);
+                } else {
+                    roomData = await getRoomFromRedis(room, socket.data.apiKey);
+                }
                 console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
                 room = roomData.id;
                 socket.data.room = roomData;
