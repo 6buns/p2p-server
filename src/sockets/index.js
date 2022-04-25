@@ -12,7 +12,7 @@ const { removeRoom } = require("../redis/removeRoom");
 io.use((socket, next) => {
     if (socket.handshake.auth.key === 'DEMO') {
         console.log(`Host : ${socket.handshake.headers.host} :: ORIGIN : ${socket.handshake.headers.origin} :: Address : ${socket.handshake.headers['x-forwarded-for']}`)
-        if ((socket.handshake.headers.host === 'p2p.6buns.com') && ['http://localhost:5555', 'https://6buns.com'].includes(socket.handshake.headers.origin)) {
+        if ((socket.handshake.headers.host === 'p2p.6buns.com') && ['http://localhost:5555', 'http://localhost:5000', 'https://6buns.com'].includes(socket.handshake.headers.origin)) {
             socket.data = {
                 ...socket?.data,
                 apiKey: 'DEMO',
