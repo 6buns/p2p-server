@@ -3,21 +3,26 @@ const { getRoomFromRedis } = require("./redis/getRoomFromRedis");
 const { getDemoRoomsRedis } = require("./redis/getDemoRoomsRedis")
 const { saveToDB } = require("./firestore/saveToDB");
 const { decrypt } = require("./helper");
+const has = require('has-value');
+const { saveStats } = require("./redis/saveStats");
 
 exports.handleMessage = async ({ type, from, to, room, token }, func, socket) => {
     let messageType = undefined;
+    /**
+     * announce - update-socket-id, track-update,
+     * direct - connection-request, data
+     * callback - room-join,
+     * process - set-stats
+     */
 
-    if ((from && to)) {
-        messageType = 'direct';
-    }
-    if (room) {
-        messageType = 'announce';
-    }
-    if (type === 'room-join') {
-        messageType = 'callback';
-    }
-    if (type === 'PONG') {
-        messageType = 'process';
+    if (['update-socket-id', 'track-update'].includes(type)) {
+        messageType = 'announce'
+    } else if (['connection-request', 'data'].includes(type)) {
+        messageType = 'direct'
+    } else if (['room-join'].includes(type)) {
+        messageType = 'room-join'
+    } else if (['set-stats'].includes(type)) {
+        messageType = 'process'
     }
 
     switch (messageType) {
@@ -49,11 +54,23 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
             // charge here room is new.
             const { name } = decrypt(token)
             let roomData = {};
+
             try {
                 if (socket.data.apiKey === 'DEMO') {
                     roomData = await getDemoRoomsRedis(room);
                 } else {
-                    roomData = await getRoomFromRedis(room, socket.data.apiKey);
+                    if (has(room)) {
+                        try {
+                            roomData = await getRoomFromRedis(room, socket.data.apiKey);
+                        } catch (error) {
+                            console.log(error)
+                            error ? func({ error }) : func({ error: 'Room not present' });
+                            socket.disconnect(true);
+                        }
+                    } else {
+                        room = randomBytes(6).toString('hex').slice(0, 6);
+                        ({ roomData } = await createRoomInRedis(room, apiKey));
+                    }
                 }
                 console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
                 room = roomData.id;
@@ -69,20 +86,20 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                 socket.data.name = name
             } catch (error) {
                 console.log(error)
-                error ? func({ error }) : func({ error: 'Room not present' });
+                error ? func({ error }) : func({ error: 'Error in accessing room.' });
                 socket.disconnect(true);
             }
             break;
         }
         case 'process': {
-            // if (type === 'PONG') {
-            //     try {
-            //         const data = JSON.parse(atob(token));
-            //         saveToDB(data, socket.data);
-            //     } catch (error) {
-            //         console.error(error);
-            //     }
-            // }
+            if (type === 'set-stats') {
+                try {
+                    const data = JSON.parse(atob(token));
+                    saveStats(room, socket.data.name, data);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
             break;
         }
         default:

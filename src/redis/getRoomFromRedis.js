@@ -9,10 +9,6 @@ exports.getRoomFromRedis = (roomId, apiKey) => {
         try {
             console.log(`GET ROOM : ${roomId} :: API KEY : ${apiKey}`);
             roomData = JSON.parse(await client.get(roomKeyHash));
-            if (!roomData) {
-                // no room data
-                ({ roomData } = await createRoomInRedis(roomId, apiKey));
-            }
             resolve({ ...roomData });
         } catch (error) {
             reject(error.message);

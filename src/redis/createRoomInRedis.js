@@ -20,6 +20,7 @@ exports.createRoomInRedis = (roomId, apiKey) => {
                 sessionId,
                 createdAt,
                 validTill,
+                stats: {}
             };
 
             redis_response = await client.set(roomKeyHash, JSON.stringify({ ...roomData }), {

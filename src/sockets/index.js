@@ -34,15 +34,11 @@ io.use((socket, next) => {
 })
 
 io.on("connection", function (socket) {
-
     console.log('Socket Joined : ', socket.id, socket.data.apiKey);
-
     socket.emit('connection', socket.id, io.of("/").adapter.rooms.size, [
         { urls: 'turn:stun.6buns.com', ...getTURNCredentials(socket.id, process.env.TURN_GCP_SECRET) }
     ]);
-
     socket.on('message', ({ type, from, to, room, token }, func) => handleMessage({ type, from, to, room, token }, func, socket))
-
     socket.on('disconnect', () => {
         console.log('Socket Left : ', socket.id, socket.adapter.sids)
         socket.data.left = Date.now()
