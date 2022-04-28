@@ -1,8 +1,8 @@
 const { createHash } = require('crypto');
 const { client } = require('.');
 
-exports.saveStats = async (roomId, name, stats) => {
-    return new Promise((resolve, reject) => {
+exports.saveStats = (roomId, name, stats) => {
+    return new Promise(async (resolve, reject) => {
         const roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
         let roomData = {};
         try {
