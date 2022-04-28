@@ -1,9 +1,9 @@
 const { createHash, randomBytes } = require('crypto');
 const { client } = require('.');
 
-exports.getDemoRoomsRedis = (roomId) => {
+exports.getDemoRoomsRedis = () => {
     return new Promise(async (resolve, reject) => {
-        let roomData, roomKeyHash, createdAt;
+        let roomData, roomKeyHash, createdAt, roomId = `demo_${randomBytes(5).toString('hex').slice(0, 5)}`;
         try {
             const clients = await client.LLEN('demo')
             console.log(`DEMO ROOMS : ${clients}`)
@@ -16,7 +16,7 @@ exports.getDemoRoomsRedis = (roomId) => {
                     createdAt = Date.now();
                     roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
                     roomData = {
-                        id: `demo_${randomBytes(5).toString('hex').slice(0, 5)}`,
+                        id: roomId,
                         apiHash: '',
                         sessionId: randomBytes(20).toString('hex').slice(0, 20),
                         createdAt,

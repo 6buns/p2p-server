@@ -57,7 +57,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
 
             try {
                 if (socket.data.apiKey === 'DEMO') {
-                    roomData = await getDemoRoomsRedis(room);
+                    roomData = await getDemoRoomsRedis();
                 } else {
                     if (has(room)) {
                         try {
