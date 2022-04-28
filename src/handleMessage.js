@@ -20,7 +20,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
     } else if (['connection-request', 'data'].includes(type)) {
         messageType = 'direct'
     } else if (['room-join'].includes(type)) {
-        messageType = 'room-join'
+        messageType = 'callback'
     } else if (['set-stats'].includes(type)) {
         messageType = 'process'
     }
