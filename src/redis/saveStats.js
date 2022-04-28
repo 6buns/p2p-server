@@ -6,7 +6,8 @@ exports.saveStats = async (roomId, name, stats) => {
         const roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
         let roomData = {};
         try {
-            roomData = JSON.parse(await client.get(roomKeyHash));
+            const data = await client.get(roomKeyHash)
+            roomData = JSON.parse(data);
             if (roomData.hasOwnProperty(stats)) {
                 roomData[stats][name] = {};
                 roomData[stats][name] = stats;
