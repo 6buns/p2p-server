@@ -8,7 +8,8 @@ exports.saveStats = (roomId, name, stats) => {
         try {
             roomData = JSON.parse(await client.get(roomKeyHash));
             roomData.stats[name] = stats;
-            resolve(await client.set(roomKeyHash, { ...roomData }));
+            await client.set(roomKeyHash, { ...roomData })
+            resolve();
         } catch (error) {
             reject(error)
         }
