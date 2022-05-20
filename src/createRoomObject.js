@@ -1,3 +1,5 @@
+const { randomBytes } = require('crypto');
+
 exports.createRoomObject = ({ id, passcode = '', permissions = { video: true, audio: true, data: true }, size = 3, bypass = false }) => {
     if (!id || id == '' || id == undefined) {
         id = randomBytes(5).toString('hex').slice(0, 5);

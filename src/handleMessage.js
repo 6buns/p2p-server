@@ -66,7 +66,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                             roomData = await getRoomFromRedis(room, socket.data.apiKey);
                         } catch (error) {
                             console.log(error)
-                            error ? func({ error }) : func({ error: 'Room not present' });
+                            error ? func({ error: error.message }) : func({ error: 'Room not present' });
                             socket.disconnect(true);
                         }
                     } else {
