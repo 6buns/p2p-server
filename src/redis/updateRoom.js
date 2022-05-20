@@ -1,7 +1,7 @@
 const { createHash } = require('crypto');
 const { client } = require('.');
 
-exports.getRoomFromRedis = (roomData) => {
+exports.updateRoom = (roomData) => {
     return new Promise(async (resolve, reject) => {
         const roomKeyHash = createHash('md5').update(`${roomData.id}`).digest('hex');
         try {

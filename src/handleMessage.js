@@ -6,6 +6,7 @@ const { decrypt } = require("./helper");
 const has = require('has-value');
 const { saveStats } = require("./redis/saveStats");
 const { createRoomInRedis } = require("./redis/createRoomInRedis");
+const { updateRoom } = require("./redis/updateRoom");
 
 exports.handleMessage = async ({ type, from, to, room, token }, func, socket) => {
     let messageType = undefined;
