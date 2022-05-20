@@ -86,7 +86,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                     socket.data.join = Date.now();
                     socket.data.name = name;
                     roomData.currentUserCount += 1;
-                    updateCurrentUserCount(roomData);
+                    updateRoom({ ...roomData });
                     func({
                         res: sockets.map(e => e.id),
                         room: {
