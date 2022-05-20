@@ -53,7 +53,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
         }
         case 'callback': {
             // charge here room is new.
-            const { name, passcode, permissions: { video = true, audio = true, data = true }, size = 3, bypass = false } = decrypt(token)
+            const { name, passcode, permissions, size, bypass } = decrypt(token)
             let roomData = {};
 
             try {
