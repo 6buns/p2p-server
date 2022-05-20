@@ -1,7 +1,7 @@
 const { createHash, randomBytes } = require('crypto');
 const { client } = require('.');
 const { createRoomInRedis } = require('./createRoomInRedis');
-const { getRoomFromRedis } = require('./updateRoom');
+const { getRoomFromRedis } = require('./getRoomFromRedis');
 
 exports.getDemoRoomsRedis = () => {
     return new Promise(async (resolve, reject) => {
