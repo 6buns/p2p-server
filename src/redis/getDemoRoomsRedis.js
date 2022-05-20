@@ -1,6 +1,5 @@
 const { createHash, randomBytes } = require('crypto');
 const { client } = require('.');
-const { createRoomObject } = require('../createRoomObject');
 const { createRoomInRedis } = require('./createRoomInRedis');
 const { getRoomFromRedis } = require('./updateRoom');
 
