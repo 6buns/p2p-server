@@ -76,6 +76,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                 }
                 // Joining Room, if conditions are met.
                 const result = checkConditions(roomData, passcode)
+                console.log(`CONDITIONS CHECK :`, { ...result })
                 if (result.state) {
                     console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
                     room = roomData.id;

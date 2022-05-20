@@ -16,7 +16,7 @@ exports.createRoomInRedis = (
             // if (!id || id == '' || id == undefined) {
             //     id = randomBytes(5).toString('hex').slice(0, 5);
             // }
-            apiHash = createHash('md5').update(apiKey).digest('hex');
+            // apiHash = createHash('md5').update(apiKey).digest('hex');
             // createdAt = Date.now();
             // validTill = Date.now() + 86400000;
             // sessionId = randomBytes(20).toString('hex').slice(0, 20);
