@@ -92,7 +92,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                     func({
                         res: sockets.map(e => e.id),
                         room: {
-                            id,
+                            room,
                             permissions: roomData.permissions
                         },
                     });
