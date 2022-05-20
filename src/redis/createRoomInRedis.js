@@ -44,7 +44,7 @@ exports.createRoomInRedis = (
             });
 
             console.log(`ROOM CREATED : ${roomId} :: VALIDITY : ${validTill}`);
-            resolve({ redis_response, roomData });
+            resolve({ ...roomData });
         } catch (error) {
             reject(error);
         }

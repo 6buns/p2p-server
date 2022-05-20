@@ -1,6 +1,8 @@
 const { createHash, randomBytes } = require('crypto');
 const { client } = require('.');
 const { createRoomObject } = require('../createRoomObject');
+const { createRoomInRedis } = require('./createRoomInRedis');
+const { getRoomFromRedis } = require('./updateRoom');
 
 exports.getDemoRoomsRedis = () => {
     return new Promise(async (resolve, reject) => {
@@ -12,7 +14,8 @@ exports.getDemoRoomsRedis = () => {
             const clients = await client.LLEN('demo')
             console.log(`DEMO ROOMS : ${clients}`)
             if (clients > 0) {
-                roomData = JSON.parse(await client.LPOP('demo'))
+                roomId = JSON.parse(await client.LPOP('demo'))
+                roomData = await getRoomFromRedis(roomId)
                 console.log(`DEMO ROOM POPPED : `, roomData)
                 resolve(roomData)
             } else {
@@ -26,9 +29,9 @@ exports.getDemoRoomsRedis = () => {
                     //     createdAt,
                     //     validTill: createdAt + 86400000,
                     // };
-                    roomData = createRoomObject({ id: roomId, bypass: true })
-                    await client.RPUSH('demo', JSON.stringify({ ...roomData }))
-                    console.log(`DEMO ROOM PUSHED`, { ...roomData })
+                    roomData = await createRoomInRedis({ id: roomId, size: 2, bypass: true })
+                    await client.RPUSH('demo', roomId)
+                    console.log(`DEMO ROOM PUSHED`, roomId)
                 } catch (error) {
                     reject(error)
                 }
@@ -41,8 +44,3 @@ exports.getDemoRoomsRedis = () => {
 
     });
 };
-
-
-const popRoom = () => {
-
-}
