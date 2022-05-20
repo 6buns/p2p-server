@@ -5,6 +5,7 @@ const { saveToDB } = require("./firestore/saveToDB");
 const { decrypt } = require("./helper");
 const has = require('has-value');
 const { saveStats } = require("./redis/saveStats");
+const { createRoomInRedis } = require("./redis/createRoomInRedis");
 
 exports.handleMessage = async ({ type, from, to, room, token }, func, socket) => {
     let messageType = undefined;
@@ -52,10 +53,11 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
         }
         case 'callback': {
             // charge here room is new.
-            const { name } = decrypt(token)
+            const { name, passcode, permissions: { video = true, audio = true, data = true }, size = 3, bypass = false } = decrypt(token)
             let roomData = {};
 
             try {
+                // Getting Room Data from Redis
                 if (socket.data.apiKey === 'DEMO') {
                     roomData = await getDemoRoomsRedis();
                 } else {
@@ -68,22 +70,33 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                             socket.disconnect(true);
                         }
                     } else {
-                        room = randomBytes(6).toString('hex').slice(0, 6);
-                        ({ roomData } = await createRoomInRedis(room, apiKey));
+                        id = randomBytes(6).toString('hex').slice(0, 6);
+                        ({ roomData } = await createRoomInRedis({ id, passcode, permissions, size, bypass }, apiKey));
                     }
                 }
-                console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
-                room = roomData.id;
-                socket.data.room = roomData;
-                socket.join(room);
-                const sockets = await io.of("/").in(room).fetchSockets();
-                console.log(`Sockets : ${sockets.map(e => e.id)}`)
-                func({
-                    res: sockets.map(e => e.id),
-                    room: roomData.id
-                });
-                socket.data.join = Date.now();
-                socket.data.name = name
+                // Joining Room, if conditions are met.
+                const result = checkConditions(roomData, passcode)
+                if (result.state) {
+                    console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
+                    room = roomData.id;
+                    socket.data.room = roomData;
+                    socket.join(room);
+                    const sockets = await io.of("/").in(room).fetchSockets();
+                    console.log(`Sockets : ${sockets.map(e => e.id)}`)
+                    socket.data.join = Date.now();
+                    socket.data.name = name;
+                    roomData.currentUserCount += 1;
+                    updateCurrentUserCount(roomData);
+                    func({
+                        res: sockets.map(e => e.id),
+                        room: {
+                            id,
+                            permissions: roomData.permissions
+                        },
+                    });
+                } else {
+                    func({ error: `Following room conditions did not meet the requirements. ${result.conditions}` })
+                }
             } catch (error) {
                 console.log(error)
                 error ? func({ error }) : func({ error: 'Error in accessing room.' });
@@ -106,3 +119,28 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
             break;
     }
 };
+
+const checkConditions = (roomData, passcode) => {
+    if (roomData.conditions.bypass) return { state: true }
+    const conditions = roomData['conditions']
+    const conditionsNotMet = [];
+    for (const type of conditions) {
+        // check if user count is less than or equal to size.
+        if (!(roomData.currentUserCount + 1 <= conditions["size"])) {
+            conditionsNotMet.push(type)
+        }
+        // check if passcode is equal to pass code provided to the user.
+        if (conditions['passcode'] === '' || passcode !== conditions["passcode"]) {
+            conditionsNotMet.push(type);
+        }
+    }
+    if (conditionsNotMet.length > 0) return {
+        state: false,
+        conditionsNotMet
+    }
+    else return { state: true }
+}
+
+const updateCurrentUserCount = (roomData) => {
+
+}
