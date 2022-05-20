@@ -4,6 +4,7 @@ const { verifySecretKey } = require("../firestore/verifySecretKey");
 const { getTURNCredentials } = require("../getTURNCredentials");
 const { handleMessage } = require("../handleMessage");
 const { removeRoom } = require("../redis/removeRoom");
+const { updateRoom } = require("../redis/updateRoom");
 
 /**
  * charge the customerId for each new room creation.
