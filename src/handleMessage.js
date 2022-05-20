@@ -80,7 +80,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                 if (result.state) {
                     console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
                     room = roomData.id;
-                    socket.data.room = roomData;
+                    socket.data.room = { ...roomData };
                     socket.join(room);
                     const sockets = await io.of("/").in(room).fetchSockets();
                     console.log(`Sockets : ${sockets.map(e => e.id)}`)
