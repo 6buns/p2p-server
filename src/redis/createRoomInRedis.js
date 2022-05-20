@@ -3,7 +3,7 @@ const { client } = require('.');
 const { createRoomObject } = require('../createRoomObject');
 
 exports.createRoomInRedis = (
-    { id, passcode, permissions: { video = true, audio = true, data = true }, size = 3, bypass = false },
+    { id, passcode, permissions = { video: true, audio: true, data: true }, size = 3, bypass = false },
     apiKey) => {
     return new Promise(async (resolve, reject) => {
         try {
