@@ -46,7 +46,7 @@ io.on("connection", function (socket) {
         socket.data.socketId = socket.id
         let roomData = { ...socket.data.room }
         roomData.currentUserCount -= 1
-        updateRoom({ ...roomData })
+        updateRoom({ ...roomData }).catch(console.error)
         if (socket.data.apiKey && socket.data.apiKey !== 'DEMO') {
             saveSession({ ...socket.data })
         }
