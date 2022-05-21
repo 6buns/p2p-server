@@ -7,7 +7,7 @@ exports.updateRoom = (roomData) => {
         let result = "";
         try {
             console.log(`UPDATE ROOM : ${roomData.id}`, { ...roomData });
-            result = await client.set(roomKeyHash, { ...roomData }, {
+            result = await client.set(roomKeyHash, JSON.stringify({ ...roomData }), {
                 XX: true
             });
         } catch (error) {
