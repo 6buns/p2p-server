@@ -27,7 +27,8 @@ app.use(cors())
 global.io = socket(server, {
     cors: {
         origin: ['*'],
-    }
+    },
+    pingTimeout: 30000,
 });
 
 require("./src/sockets");
