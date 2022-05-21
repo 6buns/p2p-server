@@ -76,7 +76,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                     }
                 }
                 // Joining Room, if conditions are met.
-                const result = checkConditions(roomData, passcode)
+                const result = checkRoomConditions(roomData, passcode)
                 console.log(`CONDITIONS CHECK :`, { ...result })
                 if (result.state) {
                     console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
@@ -93,7 +93,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
                         res: sockets.map(e => e.id),
                         room: {
                             room,
-                            permissions: roomData.permissions
+                            permissions: roomData.conditions.permissions
                         },
                     });
                 } else {
@@ -122,7 +122,7 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
     }
 };
 
-const checkConditions = (roomData, passcode) => {
+const checkRoomConditions = (roomData, passcode) => {
     if (roomData.conditions.bypass) return { state: true }
     const conditions = roomData['conditions']
     const conditionsNotMet = [];
