@@ -2,33 +2,37 @@ const { createHash, randomBytes } = require('crypto');
 const { client } = require('.');
 const { createRoomInRedis } = require('./createRoomInRedis');
 const { getRoomFromRedis } = require('./getRoomFromRedis');
+const { create } = require('./set');
 
-exports.getDemoRoomsRedis = () => {
+exports.get = (roomId) => {
     return new Promise(async (resolve, reject) => {
-        let roomData,
-            // roomKeyHash,
-            createdAt,
-            roomId = `demo_${randomBytes(5).toString('hex').slice(0, 5)}`;
+        const roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
+        let roomData = {};
+        try {
+            console.log(`GET ROOM : ${roomId}`);
+            roomData = JSON.parse(await client.get(roomKeyHash));
+            resolve({ ...roomData });
+        } catch (error) {
+            reject(error.message);
+        }
+    });
+};
+
+exports.get_demo = () => {
+    return new Promise(async (resolve, reject) => {
+        let roomData, createdAt, roomId = `demo_${randomBytes(5).toString('hex').slice(0, 5)}`;
         try {
             const clients = await client.LLEN('demo')
             console.log(`DEMO ROOMS : ${clients}`)
             if (clients > 0) {
                 roomId = await client.LPOP('demo')
-                roomData = await getRoomFromRedis(roomId)
+                roomData = await this.get(roomId)
                 console.log(`DEMO ROOM POPPED : `, roomData)
                 resolve(roomData)
             } else {
                 try {
                     createdAt = Date.now();
-                    // roomKeyHash = createHash('md5').update(`${roomId}`).digest('hex');
-                    // roomData = {
-                    //     id: roomId,
-                    //     apiHash: '',
-                    //     sessionId: randomBytes(20).toString('hex').slice(0, 20),
-                    //     createdAt,
-                    //     validTill: createdAt + 86400000,
-                    // };
-                    roomData = await createRoomInRedis({ id: roomId, size: 2, bypass: true })
+                    roomData = await create({ id: roomId, size: 2, bypass: true })
                     await client.RPUSH('demo', roomId)
                     console.log(`DEMO ROOM PUSHED`, roomId)
                 } catch (error) {
@@ -40,6 +44,5 @@ exports.getDemoRoomsRedis = () => {
         } catch (error) {
             reject(error)
         }
-
     });
 };

@@ -1,12 +1,7 @@
-
-const { getRoomFromRedis } = require("./redis/getRoomFromRedis");
-const { getDemoRoomsRedis } = require("./redis/getDemoRoomsRedis")
-const { saveToDB } = require("./firestore/saveToDB");
 const { decrypt } = require("./helper");
 const has = require('has-value');
-const { saveStats } = require("./redis/saveStats");
-const { createRoomInRedis } = require("./redis/createRoomInRedis");
-const { updateRoom } = require("./redis/updateRoom");
+const { get, get_demo } = require("./redis/room/get");
+const { save_stats, create, update } = require("./redis/room/set");
 
 exports.handleMessage = async ({ type, from, to, room, token }, func, socket) => {
     let messageType = undefined;
@@ -55,45 +50,50 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
         case 'callback': {
             // charge here room is new.
             const { name, passcode, permissions, size, bypass } = decrypt(token)
-            let roomData = {};
+            let room_data = {};
 
             try {
                 // Getting Room Data from Redis
                 if (socket.data.apiKey === 'DEMO') {
-                    roomData = await getDemoRoomsRedis();
+                    // roomData = await getDemoRoomsRedis();
+                    room_data = await get_demo();
                 } else {
                     if (has(room)) {
                         try {
-                            roomData = await getRoomFromRedis(room, socket.data.apiKey);
+                            // roomData = await getRoomFromRedis(room, socket.data.apiKey);
+                            room_data = await get(room, socket.data.apiKey);
                         } catch (error) {
                             console.log(error)
                             error ? func({ error: error.message }) : func({ error: 'Room not present' });
                             socket.disconnect(true);
                         }
                     } else {
-                        id = randomBytes(6).toString('hex').slice(0, 6);
-                        ({ roomData } = await createRoomInRedis({ id, passcode, permissions, size, bypass }, apiKey));
+                        // id = randomBytes(6).toString('hex').slice(0, 6);
+                        // ({ room_data } = await createRoomInRedis({ id, passcode, permissions, size, bypass }, apiKey));
+                        // ({ room_data } = await create({ id, passcode, permissions, size, bypass }));
+                        func({ error: 'Room does not exsists.' });
                     }
                 }
                 // Joining Room, if conditions are met.
-                const result = checkRoomConditions(roomData, passcode)
+                const result = checkRoomConditions(room_data, passcode)
                 console.log(`CONDITIONS CHECK :`, { ...result })
                 if (result.state) {
-                    console.log(`ROOM : ${roomData.id} :: VALID TILL : ${roomData.validTill}`, roomData);
-                    room = roomData.id;
-                    socket.data.room = { ...roomData };
+                    console.log(`ROOM : ${room_data.id} :: VALID TILL : ${room_data.validTill}`, room_data);
+                    room = room_data.id;
+                    socket.data.room = { ...room_data };
                     socket.join(room);
                     const sockets = await io.of("/").in(room).fetchSockets();
                     console.log(`Sockets : ${sockets.map(e => e.id)}`)
                     socket.data.join = Date.now();
                     socket.data.name = name;
-                    roomData.currentUserCount += 1;
-                    updateRoom({ ...roomData });
+                    room_data.currentUserCount += 1;
+                    // updateRoom({ ...room_data });
+                    update({ ...room_data });
                     func({
                         res: sockets.map(e => e.id),
                         room: {
                             room,
-                            permissions: roomData.conditions.permissions
+                            permissions: room_data.conditions.permissions
                         },
                     });
                 } else {
@@ -110,7 +110,8 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
             if (type === 'set-stats') {
                 try {
                     const data = JSON.parse(atob(token));
-                    saveStats(room, socket.data.name, data);
+                    // saveStats(room, socket.data.name, data);
+                    save_stats(room, socket.data.name, data);
                 } catch (error) {
                     console.error(error);
                 }
@@ -122,14 +123,14 @@ exports.handleMessage = async ({ type, from, to, room, token }, func, socket) =>
     }
 };
 
-const checkRoomConditions = (roomData, passcode) => {
-    if (roomData.conditions.bypass) return { state: true }
-    const conditions = roomData['conditions']
+const checkRoomConditions = (room_data, passcode) => {
+    if (room_data.conditions.bypass) return { state: true }
+    const conditions = room_data['conditions']
     const conditionsNotMet = [];
     for (const type of conditions) {
         // check if user count is less than or equal to size.
-        if (!(roomData.currentUserCount + 1 <= conditions["size"])) {
-            conditionsNotMet.push(type)
+        if (!(room_data.currentUserCount + 1 <= conditions["size"])) {
+            conditionsNotMet.push(type);
         }
         // check if passcode is equal to pass code provided to the user.
         if (conditions['passcode'] === '' || passcode !== conditions["passcode"]) {
@@ -141,8 +142,4 @@ const checkRoomConditions = (roomData, passcode) => {
         conditionsNotMet
     }
     else return { state: true }
-}
-
-const updateCurrentUserCount = (roomData) => {
-
 }

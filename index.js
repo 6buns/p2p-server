@@ -4,6 +4,9 @@ const { generateSecret } = require('./src/firestore/generateSecret');
 const cors = require('cors');
 const express = require("express");
 const socket = require('socket.io');
+const { create } = require('./src/redis/room/set');
+const { remove } = require('./src/redis/room/delete');
+const { io } = require('socket.io-client');
 require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: true } });
 
 // App setup
@@ -55,6 +58,56 @@ app.post('/secret', async (req, res) => {
     }
 })
 
-app.post('/list/rooms/demo', (req, res) => {
+app.post('/room/create', (req, res) => {
+    // verify credentials
+    const { room: { id, passcode, permissions, size, bypass }, api: { key, secret } } = req.body;
+    let room_data;
+    try {
+        await verifyAPIKey(key, secret)
+    } catch (error) {
+        res.json(error)
+    }
+    // create room
+    // store in redis
+    try {
+        ({ room_data } = await create({ id, passcode, permissions, size, bypass }));
+    } catch (error) {
+        res.json({ error })
+    }    // return
+    res.json({ room_data })
+})
 
+app.post('/room/delete', (req, res) => {
+    // verify credentials
+    const { room: { id }, api: { key, secret } } = req.body;
+    try {
+        await verifyAPIKey(key, secret)
+    } catch (error) {
+        res.json(error)
+    }
+
+    // remove room
+    try {
+        let response = await remove(id)
+        res.json({ response })
+    } catch (error) {
+        res.json(error)
+    }
+})
+
+app.post('/room/remove/peer', (req, res) => {
+    const { room: { id }, peers, api: { key, secret } } = req.body;
+    try {
+        await verifyAPIKey(key, secret)
+    } catch (error) {
+        res.json(error)
+    }
+
+    try {
+        await io.in(id).socketsLeave([...peers]);
+    } catch (error) {
+        res.json(error)
+    }
+
+    res.sendStatus(200)
 })

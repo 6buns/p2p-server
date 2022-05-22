@@ -4,6 +4,8 @@ const { verifySecretKey } = require("../firestore/verifySecretKey");
 const { getTURNCredentials } = require("../getTURNCredentials");
 const { handleMessage } = require("../handleMessage");
 const { removeRoom } = require("../redis/removeRoom");
+const { remove } = require("../redis/room/delete");
+const { update } = require("../redis/room/set");
 const { updateRoom } = require("../redis/updateRoom");
 
 /**
@@ -44,9 +46,10 @@ io.on("connection", function (socket) {
         console.log('Socket Left : ', socket.id, socket.adapter.sids)
         socket.data.left = Date.now()
         socket.data.socketId = socket.id
-        let roomData = { ...socket.data.room }
-        roomData.currentUserCount -= 1
-        updateRoom({ ...roomData }).catch(console.error)
+        let room_data = { ...socket.data.room }
+        room_data.currentUserCount -= 1
+        // updateRoom({ ...roomData }).catch(console.error)
+        update({ ...room_data }).catch(console.error)
         if (socket.data.apiKey && socket.data.apiKey !== 'DEMO') {
             saveSession({ ...socket.data })
         }
@@ -57,9 +60,9 @@ io.of('/').adapter.on('create-room', (room) => {
     console.log(`room ${room} was created.`);
 })
 
-io.of('/').adapter.on('delete-room', (room) => {
+io.of('/').adapter.on('delete-room', async (room) => {
+    await remove(room)
     console.log(`room ${room} was deleted.`)
-    removeRoom(room)
 })
 
 io.of('/').adapter.on('join-room', (room, id) => {
