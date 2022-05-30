@@ -1,5 +1,5 @@
 const { createHash } = require('crypto');
-const { client } = require('.');
+const { client } = require('..');
 
 exports.remove = async (room) => {
     return new Promise((resolve, reject) => {

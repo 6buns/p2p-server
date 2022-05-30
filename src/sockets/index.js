@@ -3,10 +3,8 @@ const { saveSession } = require("../firestore/saveSession");
 const { verifySecretKey } = require("../firestore/verifySecretKey");
 const { getTURNCredentials } = require("../getTURNCredentials");
 const { handleMessage } = require("../handleMessage");
-const { removeRoom } = require("../redis/removeRoom");
 const { remove } = require("../redis/room/delete");
 const { update } = require("../redis/room/set");
-const { updateRoom } = require("../redis/updateRoom");
 
 /**
  * charge the customerId for each new room creation.
