@@ -58,7 +58,7 @@ app.post('/secret', async (req, res) => {
     }
 })
 
-app.post('/room/create', (req, res) => {
+app.post('/room/create', async (req, res) => {
     // verify credentials
     const { room: { id, passcode, permissions, size, bypass }, api: { key, secret } } = req.body;
     let room_data;
@@ -77,7 +77,7 @@ app.post('/room/create', (req, res) => {
     res.json({ room_data })
 })
 
-app.post('/room/delete', (req, res) => {
+app.post('/room/delete', async (req, res) => {
     // verify credentials
     const { room: { id }, api: { key, secret } } = req.body;
     try {
@@ -95,7 +95,7 @@ app.post('/room/delete', (req, res) => {
     }
 })
 
-app.post('/room/remove/peer', (req, res) => {
+app.post('/room/remove/peer', async (req, res) => {
     const { room: { id }, peers, api: { key, secret } } = req.body;
     try {
         await verifyAPIKey(key, secret)
