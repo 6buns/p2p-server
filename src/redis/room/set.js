@@ -1,5 +1,5 @@
 const { createHash } = require('crypto');
-const { client } = require('.');
+const { client } = require('..');
 const { createRoomObject } = require('../createRoomObject');
 
 exports.create = ({ id, passcode, permissions = { video: true, audio: true, data: true }, size = 3, bypass = false }) => {

@@ -1,7 +1,5 @@
 const { createHash, randomBytes } = require('crypto');
-const { client } = require('.');
-const { createRoomInRedis } = require('./createRoomInRedis');
-const { getRoomFromRedis } = require('./getRoomFromRedis');
+const { client } = require('..');
 const { create } = require('./set');
 
 exports.get = (roomId) => {
